@@ -61,7 +61,8 @@ function incassa(pagamento) {
 </script>
 
 <template>
-  <section>
+  <section class="due-colonne">
+   <div class="colonna-cerca">
     <CampoCodice placeholder="Scansiona o cerca un titolo" :pausa="!!nuovo" @codice="suCodice" />
 
     <div v-if="messaggio" class="avviso">{{ messaggio }}</div>
@@ -77,11 +78,14 @@ function incassa(pagamento) {
     <ul v-if="risultati.length" class="lista">
       <li v-for="a in risultati" :key="a.id" @click="aggiungi(a)">
         <span class="titolo">{{ a.titolo }}</span>
-        <span>{{ euro(a.prezzo) }} · <small>disp. {{ a.quantita }}</small></span>
+        <span class="pz">{{ euro(a.prezzo) }}<br /><small>disp. {{ a.quantita }}</small></span>
       </li>
     </ul>
+    <p v-else-if="!sconosciuto" class="aiuto">Scansiona il codice a barre con la pistola o la fotocamera 📷, oppure scrivi parte del titolo e premi OK.</p>
+   </div>
 
-    <h2>Carrello</h2>
+   <div class="colonna-cassa">
+    <h2>Carrello <span v-if="carrello.length" class="pastiglia">{{ carrello.reduce((s, r) => s + r.qta, 0) }} pz</span></h2>
     <p v-if="!carrello.length" class="vuoto">Scansiona un articolo per iniziare una vendita.</p>
     <ul class="lista carrello">
       <li v-for="(r, i) in carrello" :key="r.articoloId">
@@ -111,6 +115,7 @@ function incassa(pagamento) {
         <button class="btn verde grande" @click="incassa('carta')">💳 Carta</button>
       </div>
     </div>
+   </div>
 
     <SchedaArticolo v-if="nuovo" :articolo="nuovo" @chiudi="chiudiNuovo" />
   </section>

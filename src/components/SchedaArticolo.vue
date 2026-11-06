@@ -67,7 +67,7 @@ function elimina() {
         <input v-model="form.note" placeholder="Es. condizioni, scatola 3…" />
       </label>
       <div class="riga azioni">
-        <button v-if="form.id" type="button" class="btn grigio" @click="elimina">Elimina</button>
+        <button v-if="form.id" type="button" class="btn grigio elimina" @click="elimina">Elimina</button>
         <button type="button" class="btn grigio" @click="emit('chiudi')">Annulla</button>
         <button type="submit" class="btn verde">Salva</button>
       </div>
