@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import {
   stato, euro, annullaVendita, esportaBackup, importaBackup,
   esportaMagazzinoCsv, esportaVenditeCsv, importaMagazzinoCsv, unisciVendite,
-  totaleQuote, totaleSpese,
+  totaleQuote, totaleSpese, contiPerSocio,
 } from '../store'
 
 const incasso = computed(() => stato.vendite.reduce((s, v) => s + v.totale, 0))
@@ -61,6 +61,25 @@ function azzeraVendite() {
       <div class="card evidenza"><small>Incasso meno spese</small>
         <b :class="{ 'rosso-testo': incasso - totaleSpese < 0 }">{{ euro(incasso - totaleSpese) }}</b></div>
       <div class="card"><small>Quote rimaste + incasso</small><b>{{ euro(totaleQuote - totaleSpese + incasso) }}</b></div>
+    </div>
+
+    <!-- Conti di ognuno: cosa ha venduto delle sue cose e quanto ci ha guadagnato -->
+    <h2>Per socio</h2>
+    <p class="aiuto">Guadagno = incasso meno prezzo di acquisto. Se un articolo non ha il prezzo di acquisto,
+      il suo incasso conta tutto come guadagno ed è segnato a parte in <i>senza prezzo di acquisto</i>.
+      Il proprietario si sceglie nella scheda dell'articolo (Magazzino).</p>
+    <div class="conti-soci">
+      <div v-for="c in [...contiPerSocio.righe, contiPerSocio.totale]" :key="c.id"
+           class="conto-socio" :class="{ 'totale-banco': c.id === 'totale' }">
+        <h3>{{ c.nome }} <b :class="{ 'rosso-testo': c.guadagno < 0 }">{{ euro(c.guadagno) }}</b></h3>
+        <dl>
+          <dt>Incasso ({{ c.pezziVenduti }} pz venduti)</dt><dd>{{ euro(c.incasso) }}</dd>
+          <dt>Prezzo di acquisto dei venduti</dt><dd>− {{ euro(c.costo) }}</dd>
+          <dt>Guadagno</dt><dd>{{ euro(c.guadagno) }}</dd>
+          <dt>di cui senza prezzo di acquisto</dt><dd>{{ euro(c.nonCalcolabile) }}</dd>
+          <dt>In magazzino ({{ c.pezzi }} pz)</dt><dd>{{ euro(c.valore) }}</dd>
+        </dl>
+      </div>
     </div>
 
     <h2>Vendite</h2>

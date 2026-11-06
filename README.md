@@ -9,10 +9,15 @@ App Vue 3 per gestire magazzino e vendite ai mercatini del collezionismo (fumett
 - **Magazzino**: scansiona per caricare. Codice già presente = +1 pezzo; codice nuovo = si apre
   la scheda (se c'è internet e il codice è un ISBN prova a trovare il titolo da solo).
   Ogni articolo ha una categoria (il magazzino si filtra per categoria). Gli articoli senza codice si aggiungono con *+ Nuovo* e si vendono cercandoli per titolo.
+  Ogni articolo può avere un proprietario (di quale socio è) e un prezzo di acquisto iniziale facoltativo;
+  il magazzino si filtra anche per socio.
 - **Riepilogo**: incasso totale/contanti/carta, storico vendite (con ↩ per annullare),
   backup JSON, esportazione CSV (si apre con Excel), importazione magazzino da CSV
   (`Codice;Titolo;Prezzo;Quantità;Categoria`), *Unisci vendite da altro telefono*.
   Mostra anche quote dei soci, spese e *incasso meno spese*.
+  *Per socio*: incasso e guadagno di ognuno (vendita meno prezzo di acquisto) e il totale del banco.
+  Se un articolo non ha il prezzo di acquisto il suo incasso conta tutto come guadagno, ed è mostrato
+  a parte come *senza prezzo di acquisto*.
 - **Soci**: cassa comune. Quanto mette ogni socio all'inizio (Giulia, Soheil, Davide, Kamran;
   nomi e numero di soci modificabili), le spese pagate con quei soldi (es. il suolo) e quanto resta.
 
@@ -35,6 +40,9 @@ Per gli articoli senza codice a barre (carte, action figure, gadget…) l'app st
    *Unisci vendite da altro telefono*: le vendite si aggiungono e le giacenze scendono.
    Unire lo stesso file due volte non conta doppio (le vendite hanno un id univoco).
    Si uniscono anche le spese della cassa comune; le quote dei soci vanno segnate su un telefono solo.
+   Ogni vendita si porta dietro proprietario e prezzo di acquisto degli articoli, quindi i conti
+   *Per socio* tornano anche sulla cassa principale. Conviene comunque scegliere i proprietari
+   **prima** del backup della mattina, così tutti i telefoni li hanno uguali.
 
 ## Dati
 Tutto è salvato nel `localStorage` del browser del telefono: niente server, funziona offline.
