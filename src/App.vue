@@ -13,6 +13,8 @@ const voci = [
   { id: 'soci', icona: '🤝', nome: 'Soci' },
 ]
 const attiva = ref('vendi')
+// eslint-disable-next-line no-undef
+const versione = __VERSIONE__ // impostata da vite.config.js al momento della build
 </script>
 
 <template>
@@ -21,7 +23,7 @@ const attiva = ref('vendi')
       <span class="logo">K</span>
       <div>
         <h1>Kamran CardShop</h1>
-        <small>Magazzino &amp; cassa</small>
+        <small>Magazzino &amp; cassa · versione {{ versione }}</small>
       </div>
     </div>
     <!-- Su telefono il menu va in basso, su iPad/tablet resta qui in alto -->
