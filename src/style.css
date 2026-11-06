@@ -1,48 +1,237 @@
-:root { --rosso: #e2231a; --giallo: #f3e24a; --verde: #1e9e4a; --grigio: #6b6b6b; font-family: system-ui, -apple-system, sans-serif; }
-* { box-sizing: border-box; }
-body { margin: 0; background: #fffbe0; color: #1a1a1a; font-size: 16px; }
-header { background: var(--rosso); color: #fff; padding: 10px 16px; position: sticky; top: 0; z-index: 5; }
-h1 { margin: 0; font-size: 20px; letter-spacing: .5px; text-transform: uppercase; font-weight: 900; }
-h2 { font-size: 17px; margin: 18px 0 8px; }
-main { padding: 12px 12px 90px; max-width: 700px; margin: 0 auto; }
-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: #1a1a1a; padding-bottom: env(safe-area-inset-bottom); z-index: 5; }
-nav button { flex: 1; background: none; border: 0; color: #aaa; padding: 8px 0; font-size: 22px; display: flex; flex-direction: column; align-items: center; }
-nav button span { font-size: 12px; }
-nav button.on { color: var(--giallo); }
-input { font-size: 16px; padding: 10px; border: 1px solid #ccc; border-radius: 8px; width: 100%; background: #fff; }
-.riga { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
-.riga.stretta { gap: 6px; margin: 0; white-space: nowrap; }
+/* ===== Kamran CardShop: stile ===== */
+:root {
+  --rosso: #e2231a;
+  --rosso-scuro: #b5170f;
+  --giallo: #ffd23f;
+  --verde: #17a35a;
+  --verde-scuro: #0f7f45;
+  --grigio: #6b7280;
+  --inchiostro: #1c1b22;
+  --testo: #23222a;
+  --testo-tenue: #6b6a75;
+  --sfondo: #f5f2ec;
+  --superficie: #ffffff;
+  --bordo: #e6e1d8;
+  --ombra: 0 1px 2px rgba(28, 27, 34, .06), 0 4px 14px rgba(28, 27, 34, .06);
+  --raggio: 14px;
+  --tocco: 48px; /* dimensione minima dei pulsanti, comoda per le dita */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { margin: 0; background: var(--sfondo); color: var(--testo); font-size: 16px; line-height: 1.35; }
+button, input, select { font: inherit; color: inherit; }
+button { touch-action: manipulation; }
+h2 { font-size: 15px; margin: 22px 0 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--testo-tenue); font-weight: 700; }
+code { background: #efe9df; padding: 1px 5px; border-radius: 5px; font-size: 13px; }
+
+/* ----- Testata e menu ----- */
+.testata {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+  background: linear-gradient(135deg, var(--rosso) 0%, var(--rosso-scuro) 100%);
+  color: #fff; box-shadow: 0 2px 10px rgba(181, 23, 15, .25);
+}
+.marchio { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.logo {
+  flex: none; width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center;
+  background: var(--giallo); color: var(--inchiostro); font-weight: 900; font-size: 22px;
+  transform: rotate(-6deg); box-shadow: 2px 2px 0 var(--inchiostro);
+}
+.marchio h1 { margin: 0; font-size: 19px; font-weight: 900; letter-spacing: .02em; line-height: 1.1; }
+.marchio small { opacity: .85; font-size: 12px; }
+
+/* Telefono: menu fisso in basso */
+.menu {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 5;
+  display: flex; background: var(--inchiostro);
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, .15);
+}
+.menu button {
+  flex: 1; background: none; border: 0; color: #9a99a3; padding: 8px 0 6px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 58px;
+}
+.menu i { font-style: normal; font-size: 22px; }
+.menu span { font-size: 12px; font-weight: 600; }
+.menu button.on { color: var(--giallo); }
+
+main { padding: 14px 14px calc(96px + env(safe-area-inset-bottom)); max-width: 720px; margin: 0 auto; }
+
+/* ----- Campi ----- */
+input {
+  font-size: 17px; padding: 12px 14px; min-height: var(--tocco);
+  border: 1.5px solid var(--bordo); border-radius: 12px; width: 100%; background: var(--superficie); color: var(--testo);
+  outline: none; transition: border-color .15s, box-shadow .15s; -webkit-appearance: none; appearance: none;
+}
+input:focus { border-color: var(--rosso); box-shadow: 0 0 0 4px rgba(226, 35, 26, .12); }
+.riga { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+.riga.stretta { gap: 8px; margin: 0; white-space: nowrap; }
 .riga label { flex: 1; }
-.btn { border: 0; border-radius: 8px; padding: 10px 14px; background: #1a1a1a; color: #fff; font-size: 16px; cursor: pointer; text-align: center; white-space: nowrap; }
+
+/* ----- Pulsanti ----- */
+.btn {
+  border: 0; border-radius: 12px; padding: 12px 16px; min-height: var(--tocco);
+  background: var(--inchiostro); color: #fff; font-size: 16px; font-weight: 600; cursor: pointer;
+  text-align: center; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  transition: transform .08s, filter .15s; user-select: none; -webkit-user-select: none;
+}
+.btn:active { transform: scale(.97); filter: brightness(.92); }
 .btn.rosso { background: var(--rosso); }
 .btn.verde { background: var(--verde); }
-.btn.grigio { background: var(--grigio); }
-.btn.grande { flex: 1; padding: 14px; font-size: 18px; font-weight: 700; }
-.mini { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #999; background: #fff; font-size: 18px; }
-.prezzo { width: 80px; padding: 6px; text-align: right; }
-.lista { list-style: none; padding: 0; margin: 0; }
-.lista li { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #fff; padding: 10px 12px; border-radius: 10px; margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,.08); cursor: pointer; }
+.btn.grigio { background: #ebe6dd; color: var(--testo); }
+.btn.grande { flex: 1; padding: 16px; font-size: 19px; font-weight: 800; min-height: 60px; }
+.mini {
+  width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--bordo); background: var(--superficie);
+  font-size: 20px; line-height: 1; cursor: pointer; display: inline-grid; place-items: center; padding: 0;
+}
+.mini:active { background: #f0ece4; }
+.prezzo { width: 90px; padding: 8px 10px; min-height: 40px; text-align: right; }
+
+/* ----- Liste ----- */
+.lista { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.lista li {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  background: var(--superficie); padding: 12px 14px; border-radius: var(--raggio);
+  box-shadow: var(--ombra); cursor: pointer; min-height: 56px; border: 1px solid transparent;
+}
+.lista li:active { border-color: var(--bordo); }
 .lista li.esaurito { opacity: .5; }
-.carrello li { flex-wrap: wrap; }
-.titolo { flex: 1; min-width: 0; font-weight: 600; }
-.titolo small { font-weight: 400; color: #666; }
-.vuoto, .aiuto { color: #666; font-size: 14px; }
-.avviso { background: #1a1a1a; color: var(--giallo); padding: 10px 12px; border-radius: 8px; margin: 8px 0; font-weight: 600; }
-.box { padding: 12px; border-radius: 10px; margin: 8px 0; }
-.box.giallo { background: var(--giallo); }
-.cassa { position: sticky; bottom: 70px; background: #fff; border: 2px solid var(--rosso); border-radius: 12px; padding: 12px; margin-top: 12px; }
-.totale { font-size: 22px; display: flex; justify-content: space-between; margin-bottom: 6px; }
-.rosso-testo { color: var(--rosso); }
-.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.card { background: #fff; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
-.card b { font-size: 22px; }
+.carrello li { flex-wrap: wrap; cursor: default; }
+.titolo { flex: 1; min-width: 0; font-weight: 650; }
+.titolo small { font-weight: 400; color: var(--testo-tenue); }
+.vuoto, .aiuto { color: var(--testo-tenue); font-size: 14px; }
+.pastiglia {
+  display: inline-block; padding: 2px 8px; border-radius: 999px; background: #f3efe7;
+  color: var(--testo-tenue); font-size: 12px; font-weight: 600; margin-right: 4px;
+}
+.pz { font-variant-numeric: tabular-nums; text-align: right; }
+.pz b { font-size: 17px; }
+
+/* ----- Avvisi ----- */
+.avviso {
+  background: var(--inchiostro); color: var(--giallo); padding: 12px 14px; border-radius: 12px;
+  margin: 10px 0; font-weight: 700; animation: entra .2s ease-out;
+}
+@keyframes entra { from { opacity: 0; transform: translateY(-4px); } }
+.box { padding: 14px; border-radius: var(--raggio); margin: 10px 0; }
+.box.giallo { background: #fff4c4; border: 1.5px solid var(--giallo); }
+
+/* ----- Cassa ----- */
+.cassa {
+  position: sticky; bottom: calc(70px + env(safe-area-inset-bottom));
+  background: var(--superficie); border-radius: 18px; padding: 14px; margin-top: 14px;
+  box-shadow: 0 6px 24px rgba(28, 27, 34, .14); border-top: 4px solid var(--rosso);
+}
+.totale { font-size: 18px; display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.totale b { font-size: 32px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.rosso-testo { color: var(--rosso); font-weight: 700; }
+.cassa .riga.stretta { flex-wrap: wrap; }
+
+/* ----- Riepilogo ----- */
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.card {
+  background: var(--superficie); border-radius: var(--raggio); padding: 14px; display: flex; flex-direction: column; gap: 4px;
+  box-shadow: var(--ombra);
+}
+.card small { color: var(--testo-tenue); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: .06em; }
+.card b { font-size: 24px; font-weight: 850; font-variant-numeric: tabular-nums; }
+.card.evidenza { background: var(--inchiostro); color: #fff; }
+.card.evidenza small { color: var(--giallo); }
 .griglia { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .griglia .btn { white-space: normal; font-size: 14px; }
-.sfondo { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
-.scheda { background: #fff; width: 100%; max-width: 700px; border-radius: 16px 16px 0 0; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
-.scheda h2 { margin: 0; }
-.scheda label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: #444; }
-.azioni { justify-content: flex-end; }
-.chips { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0; }
-.chips button { border: 1px solid #999; background: #fff; border-radius: 999px; padding: 6px 12px; font-size: 14px; white-space: nowrap; }
+
+/* ----- Scheda articolo (finestra) ----- */
+.sfondo {
+  position: fixed; inset: 0; background: rgba(20, 18, 24, .55); display: flex; align-items: flex-end; justify-content: center; z-index: 10;
+  animation: dissolvi .15s ease-out;
+}
+@keyframes dissolvi { from { opacity: 0; } }
+.scheda {
+  background: var(--superficie); width: 100%; max-width: 720px; border-radius: 22px 22px 0 0;
+  padding: 20px 18px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px;
+  max-height: 92vh; overflow-y: auto; animation: sale .2s ease-out;
+}
+@keyframes sale { from { transform: translateY(30px); } }
+.scheda h2 { margin: 0; font-size: 20px; text-transform: none; letter-spacing: 0; color: var(--testo); font-weight: 800; }
+.scheda label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--testo-tenue); font-weight: 600; }
+.azioni { justify-content: flex-end; flex-wrap: wrap; }
+
+/* ----- Filtri a pillola ----- */
+.chips { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 8px; -webkit-overflow-scrolling: touch; }
+.chips button {
+  border: 1.5px solid var(--bordo); background: var(--superficie); border-radius: 999px;
+  padding: 8px 16px; min-height: 40px; font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer;
+}
 .chips button.on { background: var(--rosso); border-color: var(--rosso); color: #fff; }
+
+/* Layout a due colonne (usato da Vendi): su telefono è una colonna sola */
+.due-colonne { display: block; }
+
+/* ===== iPad / tablet (da 768px) ===== */
+@media (min-width: 768px) {
+  :root { --tocco: 54px; }
+  body { font-size: 17px; }
+  .testata { padding: calc(12px + env(safe-area-inset-top)) 24px 12px; }
+  .logo { width: 44px; height: 44px; font-size: 26px; }
+  .marchio h1 { font-size: 22px; }
+
+  /* menu nella testata, a "linguette" */
+  .menu {
+    position: static; background: rgba(0, 0, 0, .18); border-radius: 14px; padding: 4px; gap: 4px; box-shadow: none;
+  }
+  .menu button {
+    flex-direction: row; gap: 8px; padding: 0 20px; min-height: 48px; border-radius: 11px; color: rgba(255, 255, 255, .85);
+  }
+  .menu span { font-size: 16px; }
+  .menu button.on { background: #fff; color: var(--rosso); }
+
+  main { max-width: 1180px; padding: 20px 24px calc(28px + env(safe-area-inset-bottom)); }
+
+  .cards { grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .card { padding: 18px; }
+  .card b { font-size: 30px; }
+  .griglia { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .griglia .btn { min-height: 64px; font-size: 15px; }
+
+  /* Magazzino: articoli su due colonne */
+  .lista.a-griglia { grid-template-columns: repeat(2, 1fr); }
+
+  /* Scheda articolo: finestra centrata invece che dal basso */
+  .sfondo { align-items: center; padding: 24px; }
+  .scheda { max-width: 560px; border-radius: 22px; padding: 24px; }
+
+  .cassa { bottom: 16px; }
+}
+
+/* iPad in orizzontale / schermi larghi: Vendi su due colonne */
+@media (min-width: 900px) {
+  .due-colonne { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 24px; align-items: start; }
+  .colonna-cassa {
+    position: sticky; top: 96px; max-height: calc(100vh - 116px); overflow-y: auto;
+    background: var(--superficie); border-radius: 20px; padding: 6px 16px 16px; box-shadow: var(--ombra);
+  }
+  .colonna-cassa h2 { margin-top: 14px; }
+  .colonna-cassa .lista li { box-shadow: none; background: #faf8f4; border: 1px solid var(--bordo); }
+  .colonna-cassa .cassa { position: static; box-shadow: none; border-radius: 14px; background: #fbf9f5; border: 1px solid var(--bordo); border-top: 4px solid var(--rosso); }
+  .lista.a-griglia { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 1100px) {
+  .due-colonne { grid-template-columns: minmax(0, 1fr) 460px; }
+}
+
+/* Pulsanti di pagamento: Svuota piccolo, Contanti e Carta grandi */
+.cassa .riga:last-child .btn.grigio { flex: 0 0 auto; padding: 12px; }
+
+/* Telefono: titolo del carrello su una riga intera, cassa più compatta */
+@media (max-width: 767px) {
+  .carrello .titolo { flex-basis: 100%; }
+  .carrello .riga.stretta { margin-left: auto; }
+  .cassa { padding: 12px; }
+  .totale b { font-size: 28px; }
+  .cassa .riga { margin: 6px 0 0; }
+  .btn.grande { padding: 12px 8px; font-size: 17px; min-height: 54px; }
+}
+.btn.elimina { color: var(--rosso); margin-right: auto; }

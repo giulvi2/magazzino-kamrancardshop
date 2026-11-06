@@ -52,10 +52,11 @@ function suCodice(valore) {
     </div>
     <p class="vuoto">{{ stato.articoli.length }} titoli · {{ totPezzi }} pezzi · valore {{ euro(totValore) }}</p>
 
-    <ul class="lista">
+    <ul class="lista a-griglia">
       <li v-for="a in elenco" :key="a.id" :class="{ esaurito: a.quantita === 0 }" @click="aperto = a">
-        <span class="titolo">{{ a.titolo }}<small v-if="a.categoria"> · {{ a.categoria }}</small><small v-if="a.codice"> · {{ a.codice }}</small></span>
-        <span>{{ euro(a.prezzo) }} · <b>{{ a.quantita }}</b> pz</span>
+        <span class="titolo">{{ a.titolo }}<br />
+          <small><span v-if="a.categoria" class="pastiglia">{{ a.categoria }}</span>{{ a.codice }}</small></span>
+        <span class="pz">{{ euro(a.prezzo) }}<br /><b>{{ a.quantita }}</b> <small>pz</small></span>
       </li>
     </ul>
 

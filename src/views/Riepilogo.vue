@@ -46,7 +46,7 @@ function azzeraVendite() {
 <template>
   <section>
     <div class="cards">
-      <div class="card"><small>Incasso</small><b>{{ euro(incasso) }}</b></div>
+      <div class="card evidenza"><small>Incasso</small><b>{{ euro(incasso) }}</b></div>
       <div class="card"><small>Contanti</small><b>{{ euro(perTipo('contanti')) }}</b></div>
       <div class="card"><small>Carta</small><b>{{ euro(perTipo('carta')) }}</b></div>
       <div class="card"><small>Pezzi venduti</small><b>{{ pezzi }}</b></div>
