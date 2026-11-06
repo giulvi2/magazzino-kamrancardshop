@@ -235,3 +235,14 @@ input:focus { border-color: var(--rosso); box-shadow: 0 0 0 4px rgba(226, 35, 26
   .btn.grande { padding: 12px 8px; font-size: 17px; min-height: 54px; }
 }
 .btn.elimina { color: var(--rosso); margin-right: auto; }
+
+/* ===== Stampa etichette QR ===== */
+/* L'area di stampa si vede solo sulla carta; in stampa si nasconde tutto il resto dell'app */
+.area-stampa { display: none; }
+@media print {
+  body { background: #fff; }
+  body > *:not(.area-stampa) { display: none !important; }
+  .area-stampa { display: block; }
+  .area-stampa .foglio { break-after: page; page-break-after: always; }
+  .area-stampa .foglio:last-child { break-after: auto; page-break-after: auto; }
+}
