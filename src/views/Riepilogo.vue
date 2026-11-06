@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import {
   stato, euro, annullaVendita, esportaBackup, importaBackup,
   esportaMagazzinoCsv, esportaVenditeCsv, importaMagazzinoCsv, unisciVendite,
+  totaleQuote, totaleSpese,
 } from '../store'
 
 const incasso = computed(() => stato.vendite.reduce((s, v) => s + v.totale, 0))
@@ -24,8 +25,9 @@ async function leggiFile(evento, tipo) {
       importaBackup(testo)
       alert('Backup ripristinato')
     } else if (tipo === 'unisci') {
-      const { aggiunte, doppie, nonTrovati } = unisciVendite(testo)
+      const { aggiunte, doppie, nonTrovati, speseAggiunte } = unisciVendite(testo)
       let msg = `Unite ${aggiunte} vendite nuove.`
+      if (speseAggiunte) msg += `\nUnite anche ${speseAggiunte} spese della cassa comune.`
       if (doppie) msg += `\n${doppie} erano già presenti e non sono state contate di nuovo.`
       if (nonTrovati.length) msg += `\nArticoli non trovati in questo magazzino (giacenza non scalata): ${nonTrovati.join(', ')}`
       alert(msg)
@@ -50,6 +52,15 @@ function azzeraVendite() {
       <div class="card"><small>Contanti</small><b>{{ euro(perTipo('contanti')) }}</b></div>
       <div class="card"><small>Carta</small><b>{{ euro(perTipo('carta')) }}</b></div>
       <div class="card"><small>Pezzi venduti</small><b>{{ pezzi }}</b></div>
+    </div>
+
+    <!-- Conti della cassa comune (scheda Soci) -->
+    <div class="cards conti">
+      <div class="card"><small>Messi dai soci</small><b>{{ euro(totaleQuote) }}</b></div>
+      <div class="card"><small>Spese</small><b>{{ euro(totaleSpese) }}</b></div>
+      <div class="card evidenza"><small>Incasso meno spese</small>
+        <b :class="{ 'rosso-testo': incasso - totaleSpese < 0 }">{{ euro(incasso - totaleSpese) }}</b></div>
+      <div class="card"><small>Quote rimaste + incasso</small><b>{{ euro(totaleQuote - totaleSpese + incasso) }}</b></div>
     </div>
 
     <h2>Vendite</h2>

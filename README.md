@@ -12,6 +12,9 @@ App Vue 3 per gestire magazzino e vendite ai mercatini del collezionismo (fumett
 - **Riepilogo**: incasso totale/contanti/carta, storico vendite (con ↩ per annullare),
   backup JSON, esportazione CSV (si apre con Excel), importazione magazzino da CSV
   (`Codice;Titolo;Prezzo;Quantità;Categoria`), *Unisci vendite da altro telefono*.
+  Mostra anche quote dei soci, spese e *incasso meno spese*.
+- **Soci**: cassa comune. Quanto mette ogni socio all'inizio (Giulia, Soheil, Davide, Kamran;
+  nomi e numero di soci modificabili), le spese pagate con quei soldi (es. il suolo) e quanto resta.
 
 ## Etichette QR
 Per gli articoli senza codice a barre (carte, action figure, gadget…) l'app stampa etichette adesive con un QR.
@@ -31,6 +34,7 @@ Per gli articoli senza codice a barre (carte, action figure, gadget…) l'app st
 3. A fine giornata ogni telefono fa *Backup (JSON)* e lo manda alla cassa principale, che usa
    *Unisci vendite da altro telefono*: le vendite si aggiungono e le giacenze scendono.
    Unire lo stesso file due volte non conta doppio (le vendite hanno un id univoco).
+   Si uniscono anche le spese della cassa comune; le quote dei soci vanno segnate su un telefono solo.
 
 ## Dati
 Tutto è salvato nel `localStorage` del browser del telefono: niente server, funziona offline.

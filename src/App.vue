@@ -1,14 +1,17 @@
 <script setup>
 import { ref } from 'vue'
+import logoKamran from './assets/logo-kamran.png'
 import Vendi from './views/Vendi.vue'
 import Magazzino from './views/Magazzino.vue'
 import Riepilogo from './views/Riepilogo.vue'
+import Soci from './views/Soci.vue'
 
-const schede = { vendi: Vendi, magazzino: Magazzino, riepilogo: Riepilogo }
+const schede = { vendi: Vendi, magazzino: Magazzino, riepilogo: Riepilogo, soci: Soci }
 const voci = [
   { id: 'vendi', icona: '🛒', nome: 'Vendi' },
   { id: 'magazzino', icona: '📦', nome: 'Magazzino' },
   { id: 'riepilogo', icona: '📊', nome: 'Riepilogo' },
+  { id: 'soci', icona: '🤝', nome: 'Soci' },
 ]
 const attiva = ref('vendi')
 </script>
@@ -16,9 +19,9 @@ const attiva = ref('vendi')
 <template>
   <header class="testata">
     <div class="marchio">
-      <span class="logo">K</span>
+      <img class="logo" :src="logoKamran" alt="Kamran" />
       <div>
-        <h1>Kamran CardShop</h1>
+        <h1>CardShop</h1>
         <small>Magazzino &amp; cassa</small>
       </div>
     </div>

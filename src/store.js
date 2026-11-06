@@ -4,12 +4,24 @@ import { reactive, watch, computed } from 'vue'
 
 const CHIAVE = 'magazzino-fumetti-v1'
 
+// Soci che mettono i soldi iniziali nella cassa comune (nomi modificabili dall'app)
+const SOCI_BASE = ['Giulia', 'Soheil', 'Davide', 'Kamran']
+const sociIniziali = () => SOCI_BASE.map((nome, i) => ({ id: 'socio' + i, nome, quota: 0 }))
+
+// Completa i dati salvati con una versione precedente dell'app (senza soci e spese)
+function completa(dati) {
+  if (!Array.isArray(dati.vendite)) dati.vendite = []
+  if (!Array.isArray(dati.soci)) dati.soci = sociIniziali()
+  if (!Array.isArray(dati.spese)) dati.spese = []
+  return dati
+}
+
 function carica() {
   try {
     const dati = JSON.parse(localStorage.getItem(CHIAVE))
-    if (dati && Array.isArray(dati.articoli)) return dati
+    if (dati && Array.isArray(dati.articoli)) return completa(dati)
   } catch (e) { /* dati rovinati: si riparte vuoti */ }
-  return { articoli: [], vendite: [] }
+  return completa({ articoli: [] })
 }
 
 export const stato = reactive(carica())
@@ -102,6 +114,29 @@ export function annullaVendita(id) {
   stato.vendite = stato.vendite.filter((x) => x.id !== id)
 }
 
+// ---- Cassa comune: quote iniziali dei soci e spese pagate con quei soldi ----
+export const totaleQuote = computed(() => stato.soci.reduce((s, x) => s + (x.quota || 0), 0))
+export const totaleSpese = computed(() => stato.spese.reduce((s, x) => s + (x.importo || 0), 0))
+
+export function aggiungiSocio(nome) {
+  stato.soci.push({ id: nuovoId(), nome: (nome || '').trim() || 'Nuovo socio', quota: 0 })
+}
+
+export function eliminaSocio(id) {
+  stato.soci = stato.soci.filter((x) => x.id !== id)
+}
+
+export function aggiungiSpesa(descrizione, importo) {
+  stato.spese.unshift({
+    id: nuovoId(), data: new Date().toISOString(),
+    descrizione: (descrizione || '').trim() || 'Spesa', importo,
+  })
+}
+
+export function eliminaSpesa(id) {
+  stato.spese = stato.spese.filter((x) => x.id !== id)
+}
+
 // Prova a recuperare il titolo da internet (solo se c'è connessione e il codice è un ISBN)
 export async function cercaTitoloOnline(codice) {
   if (!navigator.onLine || !/^97[89]\d{10}$/.test(codice)) return ''
@@ -139,6 +174,9 @@ export function importaBackup(testo) {
   if (!Array.isArray(dati.articoli)) throw new Error('File non valido')
   stato.articoli = dati.articoli
   stato.vendite = dati.vendite || []
+  // un backup fatto prima della cassa comune non ha soci e spese: si tengono quelli attuali
+  if (Array.isArray(dati.soci)) stato.soci = dati.soci
+  if (Array.isArray(dati.spese)) stato.spese = dati.spese
 }
 
 // Unisce le vendite di un altro telefono (dal suo file di backup JSON).
@@ -147,7 +185,8 @@ export function importaBackup(testo) {
 // Per ogni vendita nuova scala le giacenze di questo telefono.
 export function unisciVendite(testo) {
   const dati = JSON.parse(testo)
-  if (!Array.isArray(dati.vendite)) throw new Error('Il file non contiene vendite')
+  if (!Array.isArray(dati.vendite) && !Array.isArray(dati.spese)) throw new Error('Il file non contiene vendite')
+  if (!Array.isArray(dati.vendite)) dati.vendite = []
   const giaPresenti = new Set(stato.vendite.map((v) => v.id))
   let aggiunte = 0, doppie = 0
   const nonTrovati = new Set()
@@ -167,7 +206,19 @@ export function unisciVendite(testo) {
     aggiunte++
   }
   stato.vendite.sort((x, y) => (y.data || '').localeCompare(x.data || ''))
-  return { aggiunte, doppie, nonTrovati: [...nonTrovati] }
+
+  // Anche le spese della cassa comune segnate sull'altro telefono (stesso id = già unita).
+  // Le quote dei soci invece non si uniscono: si segnano su un telefono solo.
+  let speseAggiunte = 0
+  const speseQui = new Set(stato.spese.map((x) => x.id))
+  for (const sp of Array.isArray(dati.spese) ? dati.spese : []) {
+    if (!sp || !sp.id || speseQui.has(sp.id)) continue
+    stato.spese.push(sp)
+    speseQui.add(sp.id)
+    speseAggiunte++
+  }
+  stato.spese.sort((x, y) => (y.data || '').localeCompare(x.data || ''))
+  return { aggiunte, doppie, nonTrovati: [...nonTrovati], speseAggiunte }
 }
 
 const csvCella = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
