@@ -1,0 +1,48 @@
+:root { --rosso: #e2231a; --giallo: #f3e24a; --verde: #1e9e4a; --grigio: #6b6b6b; font-family: system-ui, -apple-system, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #fffbe0; color: #1a1a1a; font-size: 16px; }
+header { background: var(--rosso); color: #fff; padding: 10px 16px; position: sticky; top: 0; z-index: 5; }
+h1 { margin: 0; font-size: 20px; letter-spacing: .5px; text-transform: uppercase; font-weight: 900; }
+h2 { font-size: 17px; margin: 18px 0 8px; }
+main { padding: 12px 12px 90px; max-width: 700px; margin: 0 auto; }
+nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: #1a1a1a; padding-bottom: env(safe-area-inset-bottom); z-index: 5; }
+nav button { flex: 1; background: none; border: 0; color: #aaa; padding: 8px 0; font-size: 22px; display: flex; flex-direction: column; align-items: center; }
+nav button span { font-size: 12px; }
+nav button.on { color: var(--giallo); }
+input { font-size: 16px; padding: 10px; border: 1px solid #ccc; border-radius: 8px; width: 100%; background: #fff; }
+.riga { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
+.riga.stretta { gap: 6px; margin: 0; white-space: nowrap; }
+.riga label { flex: 1; }
+.btn { border: 0; border-radius: 8px; padding: 10px 14px; background: #1a1a1a; color: #fff; font-size: 16px; cursor: pointer; text-align: center; white-space: nowrap; }
+.btn.rosso { background: var(--rosso); }
+.btn.verde { background: var(--verde); }
+.btn.grigio { background: var(--grigio); }
+.btn.grande { flex: 1; padding: 14px; font-size: 18px; font-weight: 700; }
+.mini { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #999; background: #fff; font-size: 18px; }
+.prezzo { width: 80px; padding: 6px; text-align: right; }
+.lista { list-style: none; padding: 0; margin: 0; }
+.lista li { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #fff; padding: 10px 12px; border-radius: 10px; margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,.08); cursor: pointer; }
+.lista li.esaurito { opacity: .5; }
+.carrello li { flex-wrap: wrap; }
+.titolo { flex: 1; min-width: 0; font-weight: 600; }
+.titolo small { font-weight: 400; color: #666; }
+.vuoto, .aiuto { color: #666; font-size: 14px; }
+.avviso { background: #1a1a1a; color: var(--giallo); padding: 10px 12px; border-radius: 8px; margin: 8px 0; font-weight: 600; }
+.box { padding: 12px; border-radius: 10px; margin: 8px 0; }
+.box.giallo { background: var(--giallo); }
+.cassa { position: sticky; bottom: 70px; background: #fff; border: 2px solid var(--rosso); border-radius: 12px; padding: 12px; margin-top: 12px; }
+.totale { font-size: 22px; display: flex; justify-content: space-between; margin-bottom: 6px; }
+.rosso-testo { color: var(--rosso); }
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.card { background: #fff; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.card b { font-size: 22px; }
+.griglia { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.griglia .btn { white-space: normal; font-size: 14px; }
+.sfondo { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
+.scheda { background: #fff; width: 100%; max-width: 700px; border-radius: 16px 16px 0 0; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.scheda h2 { margin: 0; }
+.scheda label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: #444; }
+.azioni { justify-content: flex-end; }
+.chips { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0; }
+.chips button { border: 1px solid #999; background: #fff; border-radius: 999px; padding: 6px 12px; font-size: 14px; white-space: nowrap; }
+.chips button.on { background: var(--rosso); border-color: var(--rosso); color: #fff; }

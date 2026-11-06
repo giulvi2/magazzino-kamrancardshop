@@ -1,0 +1,174 @@
+// Stato dell'app salvato nel localStorage del telefono.
+// Niente server: funziona anche senza connessione al mercatino.
+import { reactive, watch, computed } from 'vue'
+
+const CHIAVE = 'magazzino-fumetti-v1'
+
+function carica() {
+  try {
+    const dati = JSON.parse(localStorage.getItem(CHIAVE))
+    if (dati && Array.isArray(dati.articoli)) return dati
+  } catch (e) { /* dati rovinati: si riparte vuoti */ }
+  return { articoli: [], vendite: [] }
+}
+
+export const stato = reactive(carica())
+
+// Ogni modifica viene salvata subito
+watch(stato, () => localStorage.setItem(CHIAVE, JSON.stringify(stato)), { deep: true })
+
+// Categorie proposte nel form; si possono scrivere anche categorie nuove
+export const CATEGORIE_BASE = ['Fumetti', 'Manga', 'Carte', 'Action figure', 'Gadget', 'Libri', 'Vinili']
+// Categorie effettivamente usate negli articoli
+export const categorie = computed(() =>
+  [...new Set(stato.articoli.map((a) => a.categoria).filter(Boolean))].sort())
+
+const nuovoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
+
+// I prezzi sono salvati in centesimi (interi) per evitare errori di arrotondamento
+export const euro = (cent) =>
+  new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format((cent || 0) / 100)
+export const aCentesimi = (testo) => Math.round(parseFloat(String(testo).replace(',', '.')) * 100) || 0
+export const daCentesimi = (cent) => ((cent || 0) / 100).toFixed(2).replace('.', ',')
+
+export const pulisciCodice = (c) => String(c || '').trim().replace(/[^0-9A-Za-z]/g, '')
+
+export function trovaPerCodice(codice) {
+  const c = pulisciCodice(codice)
+  if (!c) return null
+  return stato.articoli.find((a) => a.codice === c) || null
+}
+
+export function salvaArticolo(dati) {
+  const art = {
+    titolo: (dati.titolo || '').trim() || 'Senza titolo',
+    codice: pulisciCodice(dati.codice),
+    prezzo: dati.prezzo || 0,
+    quantita: Math.max(0, parseInt(dati.quantita) || 0),
+    categoria: (dati.categoria || '').trim(),
+    note: (dati.note || '').trim(),
+  }
+  if (dati.id) {
+    Object.assign(stato.articoli.find((a) => a.id === dati.id), art)
+    return dati.id
+  }
+  const id = nuovoId()
+  stato.articoli.push({ id, ...art })
+  return id
+}
+
+export function eliminaArticolo(id) {
+  stato.articoli = stato.articoli.filter((a) => a.id !== id)
+}
+
+// righe: [{ articoloId, titolo, codice, prezzo, qta }]
+export function registraVendita(righe, pagamento) {
+  for (const r of righe) {
+    const a = stato.articoli.find((x) => x.id === r.articoloId)
+    if (a) a.quantita = Math.max(0, a.quantita - r.qta)
+  }
+  const totale = righe.reduce((s, r) => s + r.prezzo * r.qta, 0)
+  stato.vendite.unshift({ id: nuovoId(), data: new Date().toISOString(), righe, totale, pagamento })
+}
+
+// Annulla una vendita e rimette i pezzi in magazzino
+export function annullaVendita(id) {
+  const v = stato.vendite.find((x) => x.id === id)
+  if (!v) return
+  for (const r of v.righe) {
+    const a = stato.articoli.find((x) => x.id === r.articoloId)
+    if (a) a.quantita += r.qta
+  }
+  stato.vendite = stato.vendite.filter((x) => x.id !== id)
+}
+
+// Prova a recuperare il titolo da internet (solo se c'è connessione e il codice è un ISBN)
+export async function cercaTitoloOnline(codice) {
+  if (!navigator.onLine || !/^97[89]\d{10}$/.test(codice)) return ''
+  try {
+    const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${codice}`)
+    const j = await r.json()
+    const info = j.items?.[0]?.volumeInfo
+    if (info) return [info.title, info.subtitle].filter(Boolean).join(' - ')
+  } catch (e) { /* offline o errore: pazienza */ }
+  try {
+    const r = await fetch(`https://openlibrary.org/isbn/${codice}.json`)
+    if (r.ok) return (await r.json()).title || ''
+  } catch (e) { /* idem */ }
+  return ''
+}
+
+// ---- Backup ed esportazione ----
+function scarica(nome, contenuto, tipo) {
+  const url = URL.createObjectURL(new Blob([contenuto], { type: tipo }))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = nome
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+const oggi = () => new Date().toISOString().slice(0, 10)
+
+export function esportaBackup() {
+  scarica(`backup-magazzino-${oggi()}.json`, JSON.stringify(stato, null, 2), 'application/json')
+}
+
+export function importaBackup(testo) {
+  const dati = JSON.parse(testo)
+  if (!Array.isArray(dati.articoli)) throw new Error('File non valido')
+  stato.articoli = dati.articoli
+  stato.vendite = dati.vendite || []
+}
+
+const csvCella = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
+const csv = (righe) => '﻿' + righe.map((r) => r.map(csvCella).join(';')).join('\n')
+
+export function esportaMagazzinoCsv() {
+  const righe = [['Codice', 'Titolo', 'Prezzo', 'Quantità', 'Categoria', 'Note']]
+  for (const a of stato.articoli) righe.push([a.codice, a.titolo, daCentesimi(a.prezzo), a.quantita, a.categoria, a.note])
+  scarica(`magazzino-${oggi()}.csv`, csv(righe), 'text/csv')
+}
+
+export function esportaVenditeCsv() {
+  const righe = [['Data', 'Ora', 'Codice', 'Titolo', 'Categoria', 'Quantità', 'Prezzo', 'Pagamento']]
+  for (const v of [...stato.vendite].reverse()) {
+    const d = new Date(v.data)
+    for (const r of v.righe)
+      righe.push([d.toLocaleDateString('it-IT'), d.toLocaleTimeString('it-IT'), r.codice, r.titolo, r.categoria, r.qta, daCentesimi(r.prezzo), v.pagamento])
+  }
+  scarica(`vendite-${oggi()}.csv`, csv(righe), 'text/csv')
+}
+
+// Importa un CSV (es. da Excel) con colonne: Codice;Titolo;Prezzo;Quantità;Categoria
+export function importaMagazzinoCsv(testo) {
+  const linee = testo.replace(/^﻿/, '').split(/\r?\n/).filter((l) => l.trim())
+  const sep = (linee[0].match(/;/g) || []).length >= (linee[0].match(/,/g) || []).length ? ';' : ','
+  let aggiunti = 0
+  for (const [i, linea] of linee.entries()) {
+    const c = linea.split(sep).map((x) => x.trim().replace(/^"|"$/g, ''))
+    if (i === 0 && /codice|titolo/i.test(linea)) continue // intestazione
+    const [codice, titolo, prezzo, quantita, categoria] = c
+    const esistente = trovaPerCodice(codice)
+    if (esistente) esistente.quantita += parseInt(quantita) || 0
+    else salvaArticolo({ codice, titolo, prezzo: aCentesimi(prezzo), quantita: quantita || 1, categoria })
+    aggiunti++
+  }
+  return aggiunti
+}
+
+// Suono + vibrazione quando lo scanner legge un codice
+let audioCtx
+export function bip(ok = true) {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)()
+    const o = audioCtx.createOscillator()
+    const g = audioCtx.createGain()
+    o.frequency.value = ok ? 1200 : 300
+    g.gain.value = 0.15
+    o.connect(g).connect(audioCtx.destination)
+    o.start()
+    o.stop(audioCtx.currentTime + (ok ? 0.12 : 0.35))
+  } catch (e) { /* niente audio */ }
+  navigator.vibrate?.(ok ? 80 : [100, 60, 100])
+}
