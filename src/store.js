@@ -45,10 +45,30 @@ export const daCentesimi = (cent) => ((cent || 0) / 100).toFixed(2).replace('.',
 
 export const pulisciCodice = (c) => String(c || '').trim().replace(/[^0-9A-Za-z]/g, '')
 
+// Maiuscole e minuscole non contano: alcune pistole scanner cambiano le lettere
+// (es. con il Bloc Maiusc attivo), e i codici delle etichette QR hanno lettere.
 export function trovaPerCodice(codice) {
-  const c = pulisciCodice(codice)
+  const c = pulisciCodice(codice).toUpperCase()
   if (!c) return null
-  return stato.articoli.find((a) => a.codice === c) || null
+  return stato.articoli.find((a) => a.codice && a.codice.toUpperCase() === c) || null
+}
+
+// ---- Etichette QR ----
+// Gli articoli senza codice a barre (carte, action figure, gadget…) ricevono un codice
+// interno "KC" + il loro id. È unico, resta uguale su tutti i telefoni che hanno lo
+// stesso backup, e lo legge sia la fotocamera sia una pistola scanner 2D.
+export const codiceInterno = (a) => 'KC' + String(a.id).toUpperCase().replace(/[^0-9A-Z]/g, '')
+export const codiceEtichetta = (a) => a.codice || codiceInterno(a)
+
+// Salva il codice interno negli articoli che non hanno ancora un codice.
+// Restituisce quanti codici sono stati assegnati.
+export function assegnaCodici(articoli) {
+  let assegnati = 0
+  for (const a of articoli) {
+    const vero = stato.articoli.find((x) => x.id === a.id)
+    if (vero && !vero.codice) { vero.codice = codiceInterno(vero); assegnati++ }
+  }
+  return assegnati
 }
 
 export function salvaArticolo(dati) {

@@ -1,7 +1,8 @@
 <script setup>
 // Form per creare o modificare un articolo
 import { reactive, ref, onMounted } from 'vue'
-import { salvaArticolo, eliminaArticolo, aCentesimi, daCentesimi, cercaTitoloOnline, categorie, CATEGORIE_BASE } from '../store'
+import StampaEtichette from './StampaEtichette.vue'
+import { stato, salvaArticolo, eliminaArticolo, aCentesimi, daCentesimi, cercaTitoloOnline, categorie, CATEGORIE_BASE } from '../store'
 
 const props = defineProps({ articolo: Object })
 const emit = defineEmits(['chiudi'])
@@ -16,6 +17,13 @@ const form = reactive({
   note: props.articolo?.note || '',
 })
 const cerco = ref(false)
+const etichetta = ref(null) // articolo di cui stampare l'etichetta QR
+
+// Salva le modifiche e apre la stampa dell'etichetta di questo articolo
+function stampaEtichetta() {
+  const id = salvaArticolo({ ...form, prezzo: aCentesimi(form.prezzo) })
+  etichetta.value = stato.articoli.find((a) => a.id === id)
+}
 
 onMounted(async () => {
   // nuovo articolo con ISBN: proviamo a compilare il titolo da soli
@@ -43,7 +51,7 @@ function elimina() {
   <div class="sfondo" @click.self="emit('chiudi')">
     <form class="scheda" @submit.prevent="salva">
       <h2>{{ form.id ? 'Modifica articolo' : 'Nuovo articolo' }}</h2>
-      <label>Codice a barre
+      <label>Codice a barre o QR
         <input v-model="form.codice" placeholder="(facoltativo)" />
       </label>
       <label>Titolo <small v-if="cerco">cerco online…</small>
@@ -68,9 +76,11 @@ function elimina() {
       </label>
       <div class="riga azioni">
         <button v-if="form.id" type="button" class="btn grigio elimina" @click="elimina">Elimina</button>
+        <button v-if="form.id" type="button" class="btn grigio" :disabled="!form.prezzo" @click="stampaEtichetta">🏷️ Etichetta</button>
         <button type="button" class="btn grigio" @click="emit('chiudi')">Annulla</button>
         <button type="submit" class="btn verde">Salva</button>
       </div>
     </form>
+    <StampaEtichette v-if="etichetta" :articoli="[etichetta]" @chiudi="etichetta = null; emit('chiudi')" />
   </div>
 </template>

@@ -2,12 +2,14 @@
 import { ref, computed } from 'vue'
 import CampoCodice from '../components/CampoCodice.vue'
 import SchedaArticolo from '../components/SchedaArticolo.vue'
+import StampaEtichette from '../components/StampaEtichette.vue'
 import { stato, euro, trovaPerCodice, pulisciCodice, bip, categorie } from '../store'
 
 const filtro = ref('')
 const categoria = ref('') // filtro per categoria ('' = tutte)
 const aperto = ref(null) // articolo in modifica (o nuovo)
 const messaggio = ref('')
+const etichette = ref(false) // finestra di stampa delle etichette QR
 
 const elenco = computed(() => {
   const q = filtro.value.toLowerCase()
@@ -38,12 +40,15 @@ function suCodice(valore) {
 
 <template>
   <section>
-    <p class="aiuto">Scansiona per caricare: se l'articolo c'è già aggiunge un pezzo, altrimenti lo crei.</p>
-    <CampoCodice placeholder="Scansiona per caricare" :pausa="!!aperto" @codice="suCodice" />
+    <p class="aiuto">Scansiona per caricare: se l'articolo c'è già aggiunge un pezzo, altrimenti lo crei.
+      Con 🏷️ Etichette stampi i QR degli articoli in elenco (usa filtro e categoria per sceglierli).</p>
+    <CampoCodice placeholder="Scansiona per caricare" :pausa="!!aperto || etichette" @codice="suCodice" />
     <div v-if="messaggio" class="avviso">{{ messaggio }}</div>
 
     <div class="riga">
       <input v-model="filtro" placeholder="🔎 Filtra per titolo o codice" />
+      <button class="btn grigio" :disabled="!elenco.length" @click="etichette = true"
+              title="Stampa le etichette QR degli articoli in elenco">🏷️ Etichette</button>
       <button class="btn" @click="aperto = {}">+ Nuovo</button>
     </div>
     <div v-if="categorie.length" class="chips">
@@ -61,5 +66,7 @@ function suCodice(valore) {
     </ul>
 
     <SchedaArticolo v-if="aperto" :articolo="aperto" @chiudi="aperto = null" />
+    <!-- Stampa gli articoli visibili adesso: usa filtro e categoria per sceglierli -->
+    <StampaEtichette v-if="etichette" :articoli="elenco" @chiudi="etichette = false" />
   </section>
 </template>
