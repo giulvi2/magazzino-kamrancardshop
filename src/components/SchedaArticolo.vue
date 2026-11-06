@@ -2,7 +2,10 @@
 // Form per creare o modificare un articolo
 import { reactive, ref, computed, onMounted } from 'vue'
 import StampaEtichette from './StampaEtichette.vue'
-import { stato, salvaArticolo, eliminaArticolo, aCentesimi, daCentesimi, categorie, CATEGORIE_BASE } from '../store'
+import {
+  stato, salvaArticolo, eliminaArticolo, aCentesimi, daCentesimi, aAcquisto,
+  categorie, CATEGORIE_BASE, ultimoProprietario,
+} from '../store'
 import { isIsbn, cercaIsbn, descrizioneIsbn } from '../isbn'
 
 const props = defineProps({ articolo: Object })
