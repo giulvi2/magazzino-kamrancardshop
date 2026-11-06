@@ -6,6 +6,8 @@
   --verde: #17a35a;
   --verde-scuro: #0f7f45;
   --grigio: #6b7280;
+  --azzurro: #4fc3ee;
+  --argento: #c9ced6;
   --inchiostro: #1c1b22;
   --testo: #23222a;
   --testo-tenue: #6b6a75;
@@ -29,18 +31,25 @@ code { background: #efe9df; padding: 1px 5px; border-radius: 5px; font-size: 13p
 .testata {
   position: sticky; top: 0; z-index: 5;
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
-  background: linear-gradient(135deg, var(--rosso) 0%, var(--rosso-scuro) 100%);
-  color: #fff; box-shadow: 0 2px 10px rgba(181, 23, 15, .25);
+  padding: calc(8px + env(safe-area-inset-top)) 16px 10px;
+  /* sfondo scuro con retino "da fumetto", come nei loghi */
+  background:
+    radial-gradient(rgba(255, 255, 255, .07) 1.2px, transparent 1.4px) 0 0 / 9px 9px,
+    linear-gradient(135deg, #26242e 0%, var(--inchiostro) 100%);
+  color: #fff; box-shadow: 0 2px 12px rgba(0, 0, 0, .25);
+}
+/* striscia rosso / giallo / azzurro sotto la testata */
+.testata::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -4px; height: 4px;
+  background: linear-gradient(90deg, var(--rosso) 0 40%, var(--giallo) 40% 70%, var(--azzurro) 70% 100%);
 }
 .marchio { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.logo {
-  flex: none; width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center;
-  background: var(--giallo); color: var(--inchiostro); font-weight: 900; font-size: 22px;
-  transform: rotate(-6deg); box-shadow: 2px 2px 0 var(--inchiostro);
+.logo { flex: none; height: 46px; width: auto; display: block; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .4)); }
+.marchio h1 {
+  margin: 0; font-size: 18px; font-weight: 900; letter-spacing: .06em; line-height: 1.1; text-transform: uppercase;
+  background: linear-gradient(180deg, #ffffff 0%, var(--argento) 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.marchio h1 { margin: 0; font-size: 19px; font-weight: 900; letter-spacing: .02em; line-height: 1.1; }
-.marchio small { opacity: .85; font-size: 12px; }
+.marchio small { color: var(--giallo); font-size: 12px; font-weight: 600; }
 
 /* Telefono: menu fisso in basso */
 .menu {
@@ -166,6 +175,14 @@ input:focus { border-color: var(--rosso); box-shadow: 0 0 0 4px rgba(226, 35, 26
 }
 .chips button.on { background: var(--rosso); border-color: var(--rosso); color: #fff; }
 
+/* Carrello vuoto con il logo KR */
+.carrello-vuoto { text-align: center; padding: 8px 0 4px; }
+.carrello-vuoto img {
+  width: 120px; height: 120px; border-radius: 22px; transform: rotate(-4deg);
+  box-shadow: 3px 3px 0 var(--inchiostro), 0 6px 18px rgba(0, 0, 0, .15);
+}
+@media (min-width: 900px) { .carrello-vuoto img { width: 170px; height: 170px; } }
+
 /* Layout a due colonne (usato da Vendi): su telefono è una colonna sola */
 .due-colonne { display: block; }
 
@@ -174,18 +191,18 @@ input:focus { border-color: var(--rosso); box-shadow: 0 0 0 4px rgba(226, 35, 26
   :root { --tocco: 54px; }
   body { font-size: 17px; }
   .testata { padding: calc(12px + env(safe-area-inset-top)) 24px 12px; }
-  .logo { width: 44px; height: 44px; font-size: 26px; }
-  .marchio h1 { font-size: 22px; }
+  .logo { height: 58px; }
+  .marchio h1 { font-size: 21px; }
 
   /* menu nella testata, a "linguette" */
   .menu {
-    position: static; background: rgba(0, 0, 0, .18); border-radius: 14px; padding: 4px; gap: 4px; box-shadow: none;
+    position: static; background: rgba(255, 255, 255, .08); border-radius: 14px; padding: 4px; gap: 4px; box-shadow: none;
   }
   .menu button {
     flex-direction: row; gap: 8px; padding: 0 20px; min-height: 48px; border-radius: 11px; color: rgba(255, 255, 255, .85);
   }
   .menu span { font-size: 16px; }
-  .menu button.on { background: #fff; color: var(--rosso); }
+  .menu button.on { background: var(--rosso); color: #fff; box-shadow: 0 2px 8px rgba(226, 35, 26, .4); }
 
   main { max-width: 1180px; padding: 20px 24px calc(28px + env(safe-area-inset-bottom)); }
 
