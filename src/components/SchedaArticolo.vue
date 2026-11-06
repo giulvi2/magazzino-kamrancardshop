@@ -16,7 +16,17 @@ const form = reactive({
   quantita: props.articolo?.quantita ?? 1,
   categoria: props.articolo?.categoria || '',
   note: props.articolo?.note || '',
+  // nuovo articolo: si propone l'ultimo proprietario scelto, comodo quando si caricano
+  // in fila tutte le cose della stessa persona
+  proprietario: props.articolo?.id ? (props.articolo.proprietario || '') : ultimoProprietario.value,
+  acquisto: typeof props.articolo?.acquisto === 'number' ? daCentesimi(props.articolo.acquisto) : '',
 })
+
+// Dati del form pronti per lo store (prezzi in centesimi)
+function dati() {
+  ultimoProprietario.value = form.proprietario
+  return { ...form, prezzo: aCentesimi(form.prezzo), acquisto: aAcquisto(form.acquisto) }
+}
 const cerco = ref(false)
 const trovato = ref(null) // dati arrivati da internet per l'ISBN
 const avviso = ref('') // esito della ricerca quando non ha trovato niente
@@ -25,7 +35,7 @@ const etichetta = ref(null) // articolo di cui stampare l'etichetta QR
 
 // Salva le modifiche e apre la stampa dell'etichetta di questo articolo
 function stampaEtichetta() {
-  const id = salvaArticolo({ ...form, prezzo: aCentesimi(form.prezzo) })
+  const id = salvaArticolo(dati())
   etichetta.value = stato.articoli.find((a) => a.id === id)
 }
 
@@ -61,7 +71,7 @@ onMounted(() => {
 })
 
 function salva() {
-  salvaArticolo({ ...form, prezzo: aCentesimi(form.prezzo) })
+  salvaArticolo(dati())
   emit('chiudi')
 }
 function elimina() {
@@ -103,11 +113,22 @@ function elimina() {
         </datalist>
       </label>
       <div class="riga">
-        <label>Prezzo €
-          <input v-model="form.prezzo" inputmode="decimal" placeholder="0,00" required />
+        <label>Di chi è
+          <select v-model="form.proprietario">
+            <option value="">— Nessuno —</option>
+            <option v-for="s in stato.soci" :key="s.id" :value="s.id">{{ s.nome }}</option>
+          </select>
         </label>
         <label>Quantità
           <input v-model.number="form.quantita" type="number" min="0" inputmode="numeric" />
+        </label>
+      </div>
+      <div class="riga">
+        <label>Prezzo di vendita €
+          <input v-model="form.prezzo" inputmode="decimal" placeholder="0,00" required />
+        </label>
+        <label>Prezzo di acquisto €
+          <input v-model="form.acquisto" inputmode="decimal" placeholder="facoltativo" />
         </label>
       </div>
       <label>Note

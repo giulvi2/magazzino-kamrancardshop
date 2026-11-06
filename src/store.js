@@ -1,6 +1,6 @@
 // Stato dell'app salvato nel localStorage del telefono.
 // Niente server: funziona anche senza connessione al mercatino.
-import { reactive, watch, computed } from 'vue'
+import { reactive, watch, computed, ref } from 'vue'
 
 const CHIAVE = 'magazzino-fumetti-v1'
 
@@ -71,6 +71,17 @@ export function assegnaCodici(articoli) {
   return assegnati
 }
 
+// ---- Proprietario e prezzo di acquisto ----
+// Ogni articolo può avere un proprietario (l'id di un socio, '' = nessuno) e un prezzo
+// di acquisto iniziale in centesimi (null = non indicato). Gli articoli salvati con le
+// versioni precedenti non hanno questi campi: valgono come "nessuno" e "non indicato".
+// Ultimo proprietario scelto nella scheda articolo (solo finché l'app resta aperta)
+export const ultimoProprietario = ref('')
+export const nomeSocio = (id) => stato.soci.find((s) => s.id === id)?.nome || ''
+const haAcquisto = (v) => typeof v === 'number' && v >= 0
+// Testo del campo "prezzo di acquisto" → centesimi, oppure null se il campo è vuoto
+export const aAcquisto = (testo) => (String(testo ?? '').trim() === '' ? null : Math.max(0, aCentesimi(testo)))
+
 export function salvaArticolo(dati) {
   const art = {
     titolo: (dati.titolo || '').trim() || 'Senza titolo',
@@ -79,6 +90,8 @@ export function salvaArticolo(dati) {
     quantita: Math.max(0, parseInt(dati.quantita) || 0),
     categoria: (dati.categoria || '').trim(),
     note: (dati.note || '').trim(),
+    proprietario: dati.proprietario || '',
+    acquisto: haAcquisto(dati.acquisto) ? dati.acquisto : null,
   }
   if (dati.id) {
     Object.assign(stato.articoli.find((a) => a.id === dati.id), art)
@@ -94,10 +107,17 @@ export function eliminaArticolo(id) {
 }
 
 // righe: [{ articoloId, titolo, codice, prezzo, qta }]
+// In ogni riga si salvano anche proprietario e prezzo di acquisto dell'articolo in quel
+// momento: così i conti restano giusti anche se poi l'articolo cambia o viene eliminato,
+// e arrivano uguali sugli altri telefoni con "Unisci vendite".
 export function registraVendita(righe, pagamento) {
   for (const r of righe) {
     const a = stato.articoli.find((x) => x.id === r.articoloId)
-    if (a) a.quantita = Math.max(0, a.quantita - r.qta)
+    if (a) {
+      a.quantita = Math.max(0, a.quantita - r.qta)
+      r.proprietario = a.proprietario || ''
+      r.acquisto = haAcquisto(a.acquisto) ? a.acquisto : null
+    }
   }
   const totale = righe.reduce((s, r) => s + r.prezzo * r.qta, 0)
   stato.vendite.unshift({ id: nuovoId(), data: new Date().toISOString(), righe, totale, pagamento })
@@ -113,6 +133,59 @@ export function annullaVendita(id) {
   }
   stato.vendite = stato.vendite.filter((x) => x.id !== id)
 }
+
+// Proprietario e prezzo di acquisto di una riga venduta. Se la riga non li ha
+// (vendite fatte prima di questa versione, o articolo senza proprietario in quel momento)
+// si usano quelli attuali dell'articolo, se esiste ancora.
+export function infoRiga(r) {
+  const a = stato.articoli.find((x) => x.id === r.articoloId)
+  return {
+    proprietario: r.proprietario || a?.proprietario || '',
+    acquisto: haAcquisto(r.acquisto) ? r.acquisto : (haAcquisto(a?.acquisto) ? a.acquisto : null),
+  }
+}
+
+// Conti per socio (più "senza proprietario") e totale del banco.
+// - incasso: quanto si è incassato con le sue cose
+// - costo: prezzo di acquisto dei pezzi venduti (solo per quelli che lo hanno)
+// - guadagno: incasso meno costo; i pezzi senza prezzo di acquisto contano per intero
+// - nonCalcolabile: la parte di incasso fatta con pezzi senza prezzo di acquisto
+//   (il loro vero guadagno non si conosce)
+// - magazzino: pezzi ancora da vendere, il loro valore a prezzo di vendita e quanto sono costati
+export const contiPerSocio = computed(() => {
+  const vuoto = (id, nome) => ({
+    id, nome, incasso: 0, costo: 0, guadagno: 0, nonCalcolabile: 0, pezziVenduti: 0,
+    pezzi: 0, valore: 0, costoMagazzino: 0,
+  })
+  const conti = new Map(stato.soci.map((s) => [s.id, vuoto(s.id, s.nome)]))
+  const nessuno = vuoto('', 'Senza proprietario')
+  const di = (id) => conti.get(id) || nessuno // socio tolto = senza proprietario
+  for (const v of stato.vendite) {
+    for (const r of v.righe || []) {
+      const { proprietario, acquisto } = infoRiga(r)
+      const c = di(proprietario)
+      const incasso = (r.prezzo || 0) * (r.qta || 0)
+      c.incasso += incasso
+      c.pezziVenduti += r.qta || 0
+      if (acquisto === null) c.nonCalcolabile += incasso
+      else c.costo += acquisto * (r.qta || 0)
+    }
+  }
+  for (const a of stato.articoli) {
+    const c = di(a.proprietario)
+    c.pezzi += a.quantita
+    c.valore += a.quantita * (a.prezzo || 0)
+    if (haAcquisto(a.acquisto)) c.costoMagazzino += a.quantita * a.acquisto
+  }
+  const righe = [...conti.values()]
+  if (nessuno.incasso || nessuno.pezzi || nessuno.pezziVenduti) righe.push(nessuno)
+  const totale = vuoto('totale', 'Totale banco')
+  for (const c of righe) {
+    c.guadagno = c.incasso - c.costo
+    for (const k of Object.keys(c)) if (typeof c[k] === 'number') totale[k] += c[k]
+  }
+  return { righe, totale }
+})
 
 // ---- Cassa comune: quote iniziali dei soci e spese pagate con quei soldi ----
 export const totaleQuote = computed(() => stato.soci.reduce((s, x) => s + (x.quota || 0), 0))
@@ -225,17 +298,22 @@ const csvCella = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
 const csv = (righe) => '﻿' + righe.map((r) => r.map(csvCella).join(';')).join('\n')
 
 export function esportaMagazzinoCsv() {
-  const righe = [['Codice', 'Titolo', 'Prezzo', 'Quantità', 'Categoria', 'Note']]
-  for (const a of stato.articoli) righe.push([a.codice, a.titolo, daCentesimi(a.prezzo), a.quantita, a.categoria, a.note])
+  const righe = [['Codice', 'Titolo', 'Prezzo', 'Quantità', 'Categoria', 'Note', 'Proprietario', 'Prezzo acquisto']]
+  for (const a of stato.articoli)
+    righe.push([a.codice, a.titolo, daCentesimi(a.prezzo), a.quantita, a.categoria, a.note,
+      nomeSocio(a.proprietario), haAcquisto(a.acquisto) ? daCentesimi(a.acquisto) : ''])
   scarica(`magazzino-${oggi()}.csv`, csv(righe), 'text/csv')
 }
 
 export function esportaVenditeCsv() {
-  const righe = [['Data', 'Ora', 'Codice', 'Titolo', 'Categoria', 'Quantità', 'Prezzo', 'Pagamento']]
+  const righe = [['Data', 'Ora', 'Codice', 'Titolo', 'Categoria', 'Quantità', 'Prezzo', 'Pagamento', 'Proprietario', 'Prezzo acquisto']]
   for (const v of [...stato.vendite].reverse()) {
     const d = new Date(v.data)
-    for (const r of v.righe)
-      righe.push([d.toLocaleDateString('it-IT'), d.toLocaleTimeString('it-IT'), r.codice, r.titolo, r.categoria, r.qta, daCentesimi(r.prezzo), v.pagamento])
+    for (const r of v.righe) {
+      const { proprietario, acquisto } = infoRiga(r)
+      righe.push([d.toLocaleDateString('it-IT'), d.toLocaleTimeString('it-IT'), r.codice, r.titolo, r.categoria, r.qta,
+        daCentesimi(r.prezzo), v.pagamento, nomeSocio(proprietario), acquisto === null ? '' : daCentesimi(acquisto)])
+    }
   }
   scarica(`vendite-${oggi()}.csv`, csv(righe), 'text/csv')
 }
