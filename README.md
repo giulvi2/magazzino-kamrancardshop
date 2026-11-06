@@ -47,6 +47,20 @@ npm run dev      # http://localhost:5173 (la fotocamera funziona su localhost)
 npm run build    # crea dist/index.html + dist/sw.js
 ```
 
+## Come contribuire
+Le regole complete sono in [`CLAUDE.md`](CLAUDE.md), che Claude Code legge da solo quando apre il progetto.
+In breve:
+1. **Mai push su `main`**: crea un branch, fai le modifiche e apri una pull request. Il merge lo fa chi
+   mantiene il repository, dopo averla rivista.
+2. **iPad con Safari è il dispositivo principale**: ogni modifica deve funzionare su iPad e su telefono.
+3. **Niente segreti nel codice** (password, chiavi, token): il repository è pubblico.
+   Prima di usare un servizio esterno, parlane nella PR o con chi mantiene il progetto.
+4. **L'app deve restare offline**: niente librerie o font caricati da internet, e i dati e backup
+   esistenti devono continuare a funzionare.
+5. **Prima di aprire la PR** esegui `npm run build` senza errori e prova l'app nel browser.
+   Nella descrizione scrivi come l'hai provata e cosa resta da provare su un dispositivo vero.
+6. Testi dell'app, commenti e commit in italiano.
+
 ## Pubblicazione
 La fotocamera funziona solo su **https://**. Basta pubblicare la cartella `dist/` su un hosting
 statico (GitHub Pages, Netlify Drop, ecc.). Al primo caricamento il service worker salva l'app,
