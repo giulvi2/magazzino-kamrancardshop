@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import CampoCodice from '../components/CampoCodice.vue'
 import SchedaArticolo from '../components/SchedaArticolo.vue'
+import logoBurst from '../assets/logo-burst.jpg'
 import { stato, euro, trovaPerCodice, pulisciCodice, registraVendita, aCentesimi, daCentesimi, bip } from '../store'
 
 const carrello = ref([]) // [{ articoloId, titolo, codice, prezzo, qta, disponibili }]
@@ -86,7 +87,10 @@ function incassa(pagamento) {
 
    <div class="colonna-cassa">
     <h2>Carrello <span v-if="carrello.length" class="pastiglia">{{ carrello.reduce((s, r) => s + r.qta, 0) }} pz</span></h2>
-    <p v-if="!carrello.length" class="vuoto">Scansiona un articolo per iniziare una vendita.</p>
+    <div v-if="!carrello.length" class="carrello-vuoto">
+      <img :src="logoBurst" alt="" />
+      <p class="vuoto">Scansiona un articolo per iniziare una vendita.</p>
+    </div>
     <ul class="lista carrello">
       <li v-for="(r, i) in carrello" :key="r.articoloId">
         <span class="titolo">{{ r.titolo }}</span>

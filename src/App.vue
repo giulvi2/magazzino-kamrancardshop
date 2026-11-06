@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import logoKamran from './assets/logo-kamran.png'
 import Vendi from './views/Vendi.vue'
 import Magazzino from './views/Magazzino.vue'
 import Riepilogo from './views/Riepilogo.vue'
@@ -20,9 +21,9 @@ const versione = __VERSIONE__ // impostata da vite.config.js al momento della bu
 <template>
   <header class="testata">
     <div class="marchio">
-      <span class="logo">K</span>
+      <img class="logo" :src="logoKamran" alt="Kamran" />
       <div>
-        <h1>Kamran CardShop</h1>
+        <h1>CardShop</h1>
         <small>Magazzino &amp; cassa · versione {{ versione }}</small>
       </div>
     </div>
