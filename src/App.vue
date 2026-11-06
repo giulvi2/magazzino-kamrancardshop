@@ -3,12 +3,14 @@ import { ref } from 'vue'
 import Vendi from './views/Vendi.vue'
 import Magazzino from './views/Magazzino.vue'
 import Riepilogo from './views/Riepilogo.vue'
+import Soci from './views/Soci.vue'
 
-const schede = { vendi: Vendi, magazzino: Magazzino, riepilogo: Riepilogo }
+const schede = { vendi: Vendi, magazzino: Magazzino, riepilogo: Riepilogo, soci: Soci }
 const voci = [
   { id: 'vendi', icona: '🛒', nome: 'Vendi' },
   { id: 'magazzino', icona: '📦', nome: 'Magazzino' },
   { id: 'riepilogo', icona: '📊', nome: 'Riepilogo' },
+  { id: 'soci', icona: '🤝', nome: 'Soci' },
 ]
 const attiva = ref('vendi')
 </script>
