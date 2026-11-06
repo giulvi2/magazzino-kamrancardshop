@@ -121,6 +121,35 @@ export function importaBackup(testo) {
   stato.vendite = dati.vendite || []
 }
 
+// Unisce le vendite di un altro telefono (dal suo file di backup JSON).
+// Aggiunge solo le vendite che qui non ci sono ancora (stesso id = già unita),
+// quindi si può importare lo stesso file più volte senza contare doppio.
+// Per ogni vendita nuova scala le giacenze di questo telefono.
+export function unisciVendite(testo) {
+  const dati = JSON.parse(testo)
+  if (!Array.isArray(dati.vendite)) throw new Error('Il file non contiene vendite')
+  const giaPresenti = new Set(stato.vendite.map((v) => v.id))
+  let aggiunte = 0, doppie = 0
+  const nonTrovati = new Set()
+  for (const v of dati.vendite) {
+    if (!v || !v.id || !Array.isArray(v.righe)) continue
+    if (giaPresenti.has(v.id)) { doppie++; continue }
+    for (const r of v.righe) {
+      // stesso articolo se ha lo stesso id, altrimenti si cerca per codice a barre
+      const a = stato.articoli.find((x) => x.id === r.articoloId) || trovaPerCodice(r.codice)
+      if (a) {
+        a.quantita = Math.max(0, a.quantita - r.qta)
+        r.articoloId = a.id // così "annulla vendita" rimette il pezzo nell'articolo giusto
+      } else nonTrovati.add(r.titolo || r.codice || '?')
+    }
+    stato.vendite.push(v)
+    giaPresenti.add(v.id)
+    aggiunte++
+  }
+  stato.vendite.sort((x, y) => (y.data || '').localeCompare(x.data || ''))
+  return { aggiunte, doppie, nonTrovati: [...nonTrovati] }
+}
+
 const csvCella = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
 const csv = (righe) => '﻿' + righe.map((r) => r.map(csvCella).join(';')).join('\n')
 

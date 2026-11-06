@@ -11,7 +11,14 @@ App Vue 3 per gestire magazzino e vendite ai mercatini del collezionismo (fumett
   Ogni articolo ha una categoria (il magazzino si filtra per categoria). Gli articoli senza codice si aggiungono con *+ Nuovo* e si vendono cercandoli per titolo.
 - **Riepilogo**: incasso totale/contanti/carta, storico vendite (con ↩ per annullare),
   backup JSON, esportazione CSV (si apre con Excel), importazione magazzino da CSV
-  (`Codice;Titolo;Prezzo;Quantità;Categoria`).
+  (`Codice;Titolo;Prezzo;Quantità;Categoria`), *Unisci vendite da altro telefono*.
+
+## Più telefoni allo stesso banco
+1. La mattina un telefono fa *Backup (JSON)* e tutti gli altri lo ripristinano: partono dallo stesso magazzino.
+2. Durante la giornata ognuno vende dal proprio telefono (le giacenze degli altri non si aggiornano).
+3. A fine giornata ogni telefono fa *Backup (JSON)* e lo manda alla cassa principale, che usa
+   *Unisci vendite da altro telefono*: le vendite si aggiungono e le giacenze scendono.
+   Unire lo stesso file due volte non conta doppio (le vendite hanno un id univoco).
 
 ## Dati
 Tutto è salvato nel `localStorage` del browser del telefono: niente server, funziona offline.

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import {
   stato, euro, annullaVendita, esportaBackup, importaBackup,
-  esportaMagazzinoCsv, esportaVenditeCsv, importaMagazzinoCsv,
+  esportaMagazzinoCsv, esportaVenditeCsv, importaMagazzinoCsv, unisciVendite,
 } from '../store'
 
 const incasso = computed(() => stato.vendite.reduce((s, v) => s + v.totale, 0))
@@ -23,6 +23,12 @@ async function leggiFile(evento, tipo) {
       if (!confirm('Il backup SOSTITUISCE tutti i dati attuali. Continuare?')) return
       importaBackup(testo)
       alert('Backup ripristinato')
+    } else if (tipo === 'unisci') {
+      const { aggiunte, doppie, nonTrovati } = unisciVendite(testo)
+      let msg = `Unite ${aggiunte} vendite nuove.`
+      if (doppie) msg += `\n${doppie} erano già presenti e non sono state contate di nuovo.`
+      if (nonTrovati.length) msg += `\nArticoli non trovati in questo magazzino (giacenza non scalata): ${nonTrovati.join(', ')}`
+      alert(msg)
     } else {
       alert(`Importate ${importaMagazzinoCsv(testo)} righe`)
     }
@@ -65,10 +71,14 @@ function azzeraVendite() {
       <label class="btn grigio">📂 Ripristina backup<input type="file" accept=".json" hidden @change="leggiFile($event, 'json')" /></label>
       <button class="btn" @click="esportaVenditeCsv">📊 Vendite (CSV)</button>
       <button class="btn" @click="esportaMagazzinoCsv">📦 Magazzino (CSV)</button>
+      <label class="btn grigio">🔗 Unisci vendite da altro telefono<input type="file" accept=".json" hidden @change="leggiFile($event, 'unisci')" /></label>
       <label class="btn grigio">📥 Importa CSV magazzino<input type="file" accept=".csv,.txt" hidden @change="leggiFile($event, 'csv')" /></label>
       <button class="btn grigio" @click="azzeraVendite">🗑 Azzera vendite</button>
     </div>
     <p class="aiuto">CSV da importare: colonne <code>Codice;Titolo;Prezzo;Quantità;Categoria</code> (Categoria facoltativa) (va bene un foglio Excel salvato come CSV).
       I dati restano solo su questo telefono: fai un backup a fine giornata.</p>
+    <p class="aiuto"><b>Più telefoni:</b> la mattina tutti ripristinano lo stesso backup. A fine giornata ogni telefono fa
+      <i>Backup (JSON)</i> e lo manda alla cassa principale, che usa <i>Unisci vendite da altro telefono</i>:
+      le vendite si sommano e le giacenze scendono. Unire due volte lo stesso file non conta doppio.</p>
   </section>
 </template>
