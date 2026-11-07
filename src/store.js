@@ -15,6 +15,8 @@ function completa(dati) {
   if (!Array.isArray(dati.spese)) dati.spese = []
   // QR dei pagamenti: Satispay è in ogni socio (socio.satispayQr), PayPal è uno per il banco
   // (pagamenti.paypalQr) più, facoltativo, uno per socio (socio.paypalQr)
+  // pagamenti.satispay / pagamenti.paypal = false: metodo spento, non compare in Vendi
+  // (se manca vale acceso, così i dati salvati prima restano come erano)
   if (!dati.pagamenti || typeof dati.pagamenti !== 'object') dati.pagamenti = { paypalQr: '' }
   dati.categorie = categorieValide(dati.categorie)
   // Promemoria backup: ogni = ogni quante vendite ricordarlo (0 = mai), daUltimo = vendite fatte
@@ -36,6 +38,9 @@ function carica() {
 }
 
 export const stato = reactive(carica())
+
+// Satispay e PayPal si possono spegnere da ⚙️ Impostazioni se non si usano
+export const metodoAttivo = (tipo) => stato.pagamenti?.[tipo] !== false
 
 // Ogni modifica viene salvata subito
 // Se il telefono non ha più spazio (es. immagini QR troppo grandi) si avvisa una volta sola

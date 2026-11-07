@@ -16,11 +16,12 @@ const nome = computed(() => (satispay.value ? 'Satispay' : 'PayPal'))
 const campoQr = satispay.value ? 'satispayQr' : 'paypalQr' // dove sta il QR nel socio
 const BANCO = '' // con PayPal, "nessun socio" vuol dire il QR del banco
 
-// Scelte possibili. Satispay: tutti i soci. PayPal: il banco e solo i soci che hanno
+// Scelte possibili. Satispay: i soci con il QR (o tutti, se nessuno l'ha caricato). PayPal: il banco e solo i soci che hanno
 // caricato il loro QR PayPal (se nessuno l'ha caricato, resta come prima: solo il banco).
 const scelte = computed(() => {
   const soci = stato.soci.map((s) => ({ id: s.id, nome: s.nome, qr: s[campoQr] || '' }))
-  if (satispay.value) return soci
+  // Satispay: se qualcuno ha caricato il QR, compaiono solo quei soci (chi non lo usa non si vede)
+  if (satispay.value) return soci.some((s) => s.qr) ? soci.filter((s) => s.qr) : soci
   return [{ id: BANCO, nome: 'Banco', qr: stato.pagamenti.paypalQr || '' }, ...soci.filter((s) => s.qr)]
 })
 
@@ -68,7 +69,7 @@ const ultimaScelta = {}
     <div class="scheda qr-pagamento" :class="tipo">
       <h2>{{ nome }} · {{ euro(totale) }}</h2>
 
-      <div v-if="scelte.length > 1" class="chips">
+      <div v-if="satispay || scelte.length > 1" class="chips">
         <button v-for="x in scelte" :key="x.id || 'banco'" :class="{ on: x.id === scelto }" @click="scelto = x.id">
           {{ x.nome }}<span v-if="!x.qr"> (senza QR)</span>
         </button>

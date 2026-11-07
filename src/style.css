@@ -342,6 +342,8 @@ select:focus { border-color: var(--rosso); box-shadow: 0 0 0 4px rgba(226, 35, 2
 
 /* ----- Pagamenti: Contanti, Carta, Satispay, PayPal ----- */
 .pagamenti { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+/* con un metodo spento i bottoni sono 3: l'ultimo prende tutta la riga */
+.pagamenti > :last-child:nth-child(odd) { grid-column: span 2; }
 .btn.satispay { background: #f94c43; }
 .btn.paypal { background: #003087; }
 .cassa .btn.svuota { width: 100%; margin-top: 8px; min-height: 40px; padding: 8px; font-size: 14px; }
@@ -360,6 +362,11 @@ select:focus { border-color: var(--rosso); box-shadow: 0 0 0 4px rgba(226, 35, 2
 
 /* Scheda Soci: elenco dei QR */
 .qr-lista li { cursor: default; }
+.metodo { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 16px 0 8px; }
+.metodo h3 { margin: 0; font-size: 17px; }
+.interruttore { display: flex; align-items: center; gap: 8px; font-size: 15px; cursor: pointer; white-space: nowrap; }
+.interruttore input { width: 24px; height: 24px; min-height: 0; padding: 0; flex: none; -webkit-appearance: checkbox; appearance: auto; accent-color: var(--verde); box-shadow: none; }
+.metodo-spento { color: var(--testo-tenue); margin: 0 0 8px; }
 .qr-mini { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; flex: none; border: 1px solid var(--bordo); }
 .vuoto-qr { display: grid; place-items: center; color: var(--testo-tenue); background: #faf8f4; }
 @media (min-width: 768px) {
