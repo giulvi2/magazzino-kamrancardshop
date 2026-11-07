@@ -264,7 +264,8 @@ export function infoRiga(r) {
 // - nonCalcolabile: la parte di incasso fatta con pezzi senza prezzo di acquisto
 //   (il loro vero guadagno non si conosce)
 // - magazzino: pezzi ancora da vendere, il loro valore a prezzo di vendita e quanto sono costati
-export const contiPerSocio = computed(() => {
+// vendite: quelle da contare (tutte, oppure solo quelle di un giorno per la chiusura)
+export function contiSoci(vendite = stato.vendite) {
   const vuoto = (id, nome) => ({
     id, nome, incasso: 0, costo: 0, guadagno: 0, nonCalcolabile: 0, pezziVenduti: 0,
     pezzi: 0, valore: 0, costoMagazzino: 0,
@@ -272,7 +273,7 @@ export const contiPerSocio = computed(() => {
   const conti = new Map(stato.soci.map((s) => [s.id, vuoto(s.id, s.nome)]))
   const nessuno = vuoto('', 'Senza proprietario')
   const di = (id) => conti.get(id) || nessuno // socio tolto = senza proprietario
-  for (const v of stato.vendite) {
+  for (const v of vendite) {
     for (const r of v.righe || []) {
       const { proprietario, acquisto } = infoRiga(r)
       const c = di(proprietario)
@@ -297,7 +298,8 @@ export const contiPerSocio = computed(() => {
     for (const k of Object.keys(c)) if (typeof c[k] === 'number') totale[k] += c[k]
   }
   return { righe, totale }
-})
+}
+export const contiPerSocio = computed(() => contiSoci(stato.vendite))
 
 // ---- Cassa comune: quote iniziali dei soci e spese pagate con quei soldi ----
 export const totaleQuote = computed(() => stato.soci.reduce((s, x) => s + (x.quota || 0), 0))
