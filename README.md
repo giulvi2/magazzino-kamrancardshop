@@ -58,8 +58,13 @@ npm run build    # crea dist/index.html + dist/sw.js
 ## Come contribuire
 Le regole complete sono in [`CLAUDE.md`](CLAUDE.md), che Claude Code legge da solo quando apre il progetto.
 In breve:
-1. **Mai push su `main`**: crea un branch, fai le modifiche e apri una pull request. Il merge lo fa chi
-   mantiene il repository, dopo averla rivista.
+1. **Mai push su `main` o `develop`**: crea un branch da `develop`, fai le modifiche e apri una pull
+   request verso `develop`. Il merge lo fa chi mantiene il repository, dopo averla rivista.
+   Il lavoro è diviso in user story e task su GitHub Issues (dettagli nel *Git flow* di
+   [`CLAUDE.md`](CLAUDE.md#git-flow)):
+   - `userstory/<n>-descrizione` per una user story, `task/<n>-descrizione` per un task;
+   - `release/x.y.z` da `develop` per pubblicare: PR verso `main`, tag `vx.y.z`, poi back merge in `develop`;
+   - `hotfix/x.y.z` da `main` solo per errori urgenti sul sito, poi back merge in `develop`.
 2. **iPad con Safari è il dispositivo principale**: ogni modifica deve funzionare su iPad e su telefono.
 3. **Niente segreti nel codice** (password, chiavi, token): il repository è pubblico.
    Prima di usare un servizio esterno, parlane nella PR o con chi mantiene il progetto.
@@ -74,5 +79,5 @@ La fotocamera funziona solo su **https://**. Basta pubblicare la cartella `dist/
 statico (GitHub Pages, Netlify Drop, ecc.). Al primo caricamento il service worker salva l'app,
 così si riapre anche senza rete.
 
-Ogni push su `main` ripubblica l'app su GitHub Pages tramite `.github/workflows/deploy.yml`
+Ogni push su `main` (cioè ogni release o hotfix) ripubblica l'app su GitHub Pages tramite `.github/workflows/deploy.yml`
 (Settings → Pages → Source: **GitHub Actions**).
