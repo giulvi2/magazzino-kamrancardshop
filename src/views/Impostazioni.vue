@@ -2,7 +2,7 @@
 // Impostazioni generali dell'app: soci e quote, QR per i pagamenti, categorie.
 import { ref, computed } from 'vue'
 import SociQuote from '../components/SociQuote.vue'
-import { tutteCategorie, articoliInCategoria, aggiungiCategoria, eliminaCategoria } from '../store'
+import { stato, tutteCategorie, articoliInCategoria, aggiungiCategoria, eliminaCategoria } from '../store'
 
 const nuova = ref('')
 function aggiungi() {
@@ -33,6 +33,19 @@ function confermaElimina() {
 <template>
   <section>
     <SociQuote />
+
+    <h2>Promemoria backup</h2>
+    <label class="riga stretta">Ricordami il backup JSON ogni
+      <select v-model.number="stato.backup.ogni" aria-label="Ogni quante vendite">
+        <option :value="5">5 vendite</option>
+        <option :value="10">10 vendite</option>
+        <option :value="20">20 vendite</option>
+        <option :value="30">30 vendite</option>
+        <option :value="0">mai</option>
+      </select>
+    </label>
+    <p class="aiuto">Il promemoria compare nella pagina Vendi. Vendite fatte su questo telefono dall'ultimo backup:
+      <b>{{ stato.backup.daUltimo }}</b>. Il backup si fa anche da Riepilogo &gt; Dati &gt; Backup (JSON).</p>
 
     <h2>Categorie</h2>
     <p class="aiuto">Le categorie che compaiono nella scheda articolo. Se elimini una categoria usata,
