@@ -4,15 +4,13 @@ import logoKamran from './assets/logo-kamran.png'
 import Vendi from './views/Vendi.vue'
 import Magazzino from './views/Magazzino.vue'
 import Riepilogo from './views/Riepilogo.vue'
-import Soci from './views/Soci.vue'
 import Impostazioni from './views/Impostazioni.vue'
 
-const schede = { vendi: Vendi, magazzino: Magazzino, riepilogo: Riepilogo, soci: Soci, impostazioni: Impostazioni }
+const schede = { vendi: Vendi, magazzino: Magazzino, riepilogo: Riepilogo, impostazioni: Impostazioni }
 const voci = [
   { id: 'vendi', icona: '🛒', nome: 'Vendi' },
   { id: 'magazzino', icona: '📦', nome: 'Magazzino' },
   { id: 'riepilogo', icona: '📊', nome: 'Riepilogo' },
-  { id: 'soci', icona: '🤝', nome: 'Soci' },
 ]
 const attiva = ref('vendi')
 // eslint-disable-next-line no-undef
@@ -34,7 +32,7 @@ const versione = __VERSIONE__ // impostata da vite.config.js al momento della bu
         <i>{{ v.icona }}</i><span>{{ v.nome }}</span>
       </button>
     </nav>
-    <!-- Impostazioni generali (categorie…): fuori dal menu, che sul telefono è già pieno -->
+    <!-- Impostazioni generali (soci, QR per i pagamenti, categorie…): fuori dal menu, che sul telefono è già pieno -->
     <button class="impostazioni" :class="{ on: attiva === 'impostazioni' }" title="Impostazioni"
             aria-label="Impostazioni" @click="attiva = 'impostazioni'">⚙️</button>
   </header>
