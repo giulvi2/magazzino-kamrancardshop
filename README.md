@@ -62,7 +62,7 @@ In breve:
    request verso `develop`. Il merge lo fa chi mantiene il repository, dopo averla rivista.
    Il lavoro è diviso in user story e task su GitHub Issues (dettagli nel *Git flow* di
    [`CLAUDE.md`](CLAUDE.md#git-flow)):
-   - `feature/US-<n>-descrizione` per una user story, `task/<n>-descrizione` per un task;
+   - `userstory/<n>-descrizione` per una user story, `task/<n>-descrizione` per un task;
    - `release/x.y.z` da `develop` per pubblicare: PR verso `main`, tag `vx.y.z`, poi back merge in `develop`;
    - `hotfix/x.y.z` da `main` solo per errori urgenti sul sito, poi back merge in `develop`.
 2. **iPad con Safari è il dispositivo principale**: ogni modifica deve funzionare su iPad e su telefono.

@@ -37,6 +37,7 @@ Contiene le regole di lavoro del progetto: valgono per Claude e per chiunque con
 - **`main`** è la versione pubblicata: ogni merge su `main` ripubblica il sito. Ci si arriva solo
   da un branch `release/…` o `hotfix/…`.
 - **`develop`** è il branch di integrazione: tutto il lavoro nuovo parte da qui e torna qui.
+- I branch sono solo di sei tipi: `main`, `develop`, `userstory/…`, `task/…`, `release/…`, `hotfix/…`.
 - **User story e task** stanno su GitHub Issues e usano le etichette predefinite di GitHub:
   una user story è una issue con `enhancement`, un errore è una issue con `bug`, e ogni task è una
   sotto-issue della sua user story (`documentation`, `question`… se servono). Ogni release ha una
@@ -44,8 +45,8 @@ Contiene le regole di lavoro del progetto: valgono per Claude e per chiunque con
 
 | Branch | Parte da | PR verso | Quando |
 |---|---|---|---|
-| `feature/US-<n>-descrizione` | `develop` | `develop` | una user story (issue n. `<n>`) |
-| `task/<n>-descrizione` | `develop` | `develop` | un task piccolo o un bug non urgente |
+| `userstory/<n>-descrizione` | `develop` | `develop` | una user story (issue n. `<n>`) |
+| `task/<n>-descrizione` | `develop` | `develop` (o il branch `userstory/…`) | un task o un bug non urgente (issue n. `<n>`) |
 | `release/x.y.z` | `develop` | `main`, poi back merge in `develop` | per pubblicare una versione |
 | `hotfix/x.y.z` | `main` | `main`, poi back merge in `develop` | errore urgente sul sito pubblicato |
 
