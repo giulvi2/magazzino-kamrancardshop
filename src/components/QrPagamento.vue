@@ -19,7 +19,8 @@ const BANCO = '' // con PayPal, "nessun socio" vuol dire il QR del banco
 // Scelte possibili. Satispay: i soci con il QR (o tutti, se nessuno l'ha caricato). PayPal: il banco e solo i soci che hanno
 // caricato il loro QR PayPal (se nessuno l'ha caricato, resta come prima: solo il banco).
 const scelte = computed(() => {
-  const soci = stato.soci.map((s) => ({ id: s.id, nome: s.nome, qr: s[campoQr] || '' }))
+  // i soci tolti dalla sezione QR in ⚙️ Impostazioni (senzaQr) non compaiono
+  const soci = stato.soci.filter((s) => !s.senzaQr).map((s) => ({ id: s.id, nome: s.nome, qr: s[campoQr] || '' }))
   // Satispay: se qualcuno ha caricato il QR, compaiono solo quei soci (chi non lo usa non si vede)
   if (satispay.value) return soci.some((s) => s.qr) ? soci.filter((s) => s.qr) : soci
   return [{ id: BANCO, nome: 'Banco', qr: stato.pagamenti.paypalQr || '' }, ...soci.filter((s) => s.qr)]
