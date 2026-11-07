@@ -377,6 +377,12 @@ select:focus { border-color: var(--rosso); box-shadow: 0 0 0 4px rgba(226, 35, 2
   .menu button { flex: 1; justify-content: center; padding: 0 10px; }
 }
 
+/* Riepilogo: pulsante della chiusura della giornata */
+.chiusura-apri { width: 100%; margin-bottom: 12px; }
+/* Le colonne del CSV in Riepilogo (<code> lungo) su telefono andavano a capo male e allargavano
+   la pagina oltre lo schermo: ora possono andare a capo in qualsiasi punto */
+code { overflow-wrap: anywhere; }
+
 /* ----- Vendi: ultima vendita, sconto, promemoria backup ----- */
 .ultima-vendita { background: #eef6ff; border: 1.5px solid var(--azzurro); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .ultima-vendita .btn { min-height: 40px; padding: 8px 14px; }

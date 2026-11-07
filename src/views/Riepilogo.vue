@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import SpeseCassa from '../components/SpeseCassa.vue'
+import ChiusuraGiornata from '../components/ChiusuraGiornata.vue'
 import { leggiChiaveGoogle, salvaChiaveGoogle } from '../isbn'
 import {
   stato, euro, annullaVendita, esportaBackup, importaBackup,
@@ -9,6 +10,9 @@ import {
 } from '../store'
 
 // Chiave Google Books per la ricerca ISBN: resta solo su questo telefono
+// Finestra della chiusura della giornata
+const chiusuraAperta = ref(false)
+
 const chiaveGoogle = ref(leggiChiaveGoogle())
 const chiaveSalvata = ref(false)
 function salvaChiave() {
@@ -74,6 +78,9 @@ function azzeraVendite() {
 
 <template>
   <section>
+    <button class="btn verde chiusura-apri" @click="chiusuraAperta = true">🧾 Chiusura della giornata</button>
+    <ChiusuraGiornata v-if="chiusuraAperta" @chiudi="chiusuraAperta = false" />
+
     <div class="cards">
       <div class="card evidenza"><small>Incasso</small><b>{{ euro(incasso) }}</b></div>
       <div class="card"><small>Contanti</small><b>{{ euro(perTipo('contanti')) }}</b></div>
