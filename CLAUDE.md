@@ -10,12 +10,14 @@ Contiene le regole di lavoro del progetto: valgono per Claude e per chiunque con
 - Niente server: i dati stanno nel `localStorage` del browser. Funziona offline grazie al service
   worker (`public/sw.js`) e alla build in un unico file (`vite-plugin-singlefile`).
 - Più telefoni allo stesso banco si allineano con backup JSON e *Unisci vendite da altro telefono*.
-- Ogni push su `main` pubblica l'app su GitHub Pages (`.github/workflows/deploy.yml`).
+- Ogni push su `main` pubblica l'app su GitHub Pages (`.github/workflows/deploy.yml`): per questo
+  su `main` si arriva solo con una release o un hotfix.
 
 ## Regole di lavoro
 - **Lingua**: rispondi, scrivi commenti nel codice, testi dell'app e messaggi di commit in italiano.
-- **Branch e PR**: ogni modifica va su un branch con una pull request da rivedere.
-  Mai push diretti su `main`: il merge lo fa chi mantiene il repository.
+- **Branch e PR**: ogni modifica va su un branch con una pull request da rivedere, seguendo il
+  [git flow](#git-flow) qui sotto. Mai push diretti su `main` o `develop`: il merge lo fa chi
+  mantiene il repository.
 - **Niente lavori di propria iniziativa**: prima di iniziare qualcosa di nuovo, descrivi cosa vuoi
   fare e aspetta l'ok.
 - **Niente segreti nel codice**: non inserire password, chiavi API o token nei file del repository
@@ -31,6 +33,29 @@ Contiene le regole di lavoro del progetto: valgono per Claude e per chiunque con
   telefoni scaricano la versione nuova.
 - **Mantieni semplice**: estendi l'app esistente invece di riscriverla; preferisci poche dipendenze.
 
+## Git flow
+- **`main`** è la versione pubblicata: ogni merge su `main` ripubblica il sito. Ci si arriva solo
+  da un branch `release/…` o `hotfix/…`.
+- **`develop`** è il branch di integrazione: tutto il lavoro nuovo parte da qui e torna qui.
+- **User story e task** stanno su GitHub Issues, con le etichette `user story`, `task` e `bug`.
+  Ogni task è una sotto-issue della sua user story. Ogni release ha una milestone (es. `v1.1.0`).
+
+| Branch | Parte da | PR verso | Quando |
+|---|---|---|---|
+| `feature/US-<n>-descrizione` | `develop` | `develop` | una user story (issue n. `<n>`) |
+| `task/<n>-descrizione` | `develop` | `develop` | un task piccolo o un bug non urgente |
+| `release/x.y.z` | `develop` | `main`, poi back merge in `develop` | per pubblicare una versione |
+| `hotfix/x.y.z` | `main` | `main`, poi back merge in `develop` | errore urgente sul sito pubblicato |
+
+- I branch di Claude Code si chiamano `claude/…`: in quel caso il titolo della PR inizia con il
+  numero della user story (es. `US-12: …`) e la descrizione contiene `Closes #12`.
+- **Release**: crea `release/x.y.z` da `develop`, aggiorna `version` in `package.json` e fai solo
+  prove e correzioni. Poi PR verso `main`; dopo il merge metti il tag `vx.y.z` con una GitHub
+  Release e apri la PR di back merge `release/x.y.z` → `develop`.
+- **Versioni** (semver `MAGGIORE.MINORE.CORREZIONE`): MAGGIORE se i dati o i backup salvati non
+  restano compatibili, MINORE per funzioni nuove, CORREZIONE per correzioni.
+- Non pubblicare release a ridosso di un mercatino: il giorno prima solo hotfix indispensabili.
+
 ## Come provare le modifiche
 ```bash
 npm install
@@ -40,7 +65,7 @@ npm run build    # deve terminare senza errori: crea dist/index.html + dist/sw.j
 - Prova nel browser con le dimensioni di iPad (es. 1024×768 e 768×1024) e di un telefono.
 - Prima di dire che qualcosa funziona, spiega **come è stato provato** (build, browser, emulazione…)
   e **cosa resta da provare su un dispositivo vero** (iPad o telefono: fotocamera, scanner, stampa).
-- Dopo il merge, la testata dell'app mostra la versione (data e ora della build): serve per
+- Dopo il merge su `main`, la testata dell'app mostra la versione (data e ora della build): serve per
   controllare che il dispositivo stia usando quella nuova.
 
 ## Pull request
