@@ -2,7 +2,7 @@
 // Soci, quote messe nella cassa comune e QR per i pagamenti (dentro ⚙️ Impostazioni).
 // Le spese della cassa comune stanno nel Riepilogo (SpeseCassa.vue).
 import {
-  stato, euro, aCentesimi, daCentesimi, totaleQuote, aggiungiSocio, eliminaSocio,
+  stato, euro, metodoAttivo, aCentesimi, daCentesimi, totaleQuote, aggiungiSocio, eliminaSocio,
 } from '../store'
 import { leggiImmagine } from '../immagini'
 
@@ -47,45 +47,66 @@ function togliQr(testo, togli) {
     </div>
 
     <h2>QR per i pagamenti</h2>
-    <p class="aiuto">Carica una foto o uno screenshot del QR (meglio ritagliato sul solo QR).
-      In Vendi, con <b>Satispay</b> si sceglie il socio e compare il suo QR; con <b>PayPal</b> compare quello del banco
-      oppure, se un socio ha caricato il suo QR PayPal, si sceglie tra banco e socio.
-      I QR finiscono anche nel backup, così arrivano sugli altri telefoni.</p>
-    <ul class="lista qr-lista">
-      <li v-for="s in stato.soci" :key="'qr' + s.id">
-        <img v-if="s.satispayQr" :src="s.satispayQr" alt="" class="qr-mini" />
-        <span v-else class="qr-mini vuoto-qr">—</span>
-        <span class="titolo">Satispay<br /><small>{{ s.nome }}</small></span>
-        <span class="riga stretta">
-          <label class="btn grigio">{{ s.satispayQr ? 'Cambia' : 'Carica' }}
-            <input type="file" accept="image/*" hidden @change="caricaQr($event, (d) => (s.satispayQr = d))" /></label>
-          <button v-if="s.satispayQr" class="mini" title="Togli QR"
-                  @click="togliQr(`il QR Satispay di ${s.nome}`, () => delete s.satispayQr)">✕</button>
-        </span>
-      </li>
-      <li>
-        <img v-if="stato.pagamenti.paypalQr" :src="stato.pagamenti.paypalQr" alt="" class="qr-mini" />
-        <span v-else class="qr-mini vuoto-qr">—</span>
-        <span class="titolo">PayPal<br /><small>del banco</small></span>
-        <span class="riga stretta">
-          <label class="btn grigio">{{ stato.pagamenti.paypalQr ? 'Cambia' : 'Carica' }}
-            <input type="file" accept="image/*" hidden @change="caricaQr($event, (d) => (stato.pagamenti.paypalQr = d))" /></label>
-          <button v-if="stato.pagamenti.paypalQr" class="mini" title="Togli QR"
-                  @click="togliQr('il QR PayPal', () => (stato.pagamenti.paypalQr = ''))">✕</button>
-        </span>
-      </li>
-      <li v-for="s in stato.soci" :key="'pp' + s.id">
-        <img v-if="s.paypalQr" :src="s.paypalQr" alt="" class="qr-mini" />
-        <span v-else class="qr-mini vuoto-qr">—</span>
-        <span class="titolo">PayPal<br /><small>{{ s.nome }}</small></span>
-        <span class="riga stretta">
-          <label class="btn grigio">{{ s.paypalQr ? 'Cambia' : 'Carica' }}
-            <input type="file" accept="image/*" hidden @change="caricaQr($event, (d) => (s.paypalQr = d))" /></label>
-          <button v-if="s.paypalQr" class="mini" title="Togli QR"
-                  @click="togliQr(`il QR PayPal di ${s.nome}`, () => delete s.paypalQr)">✕</button>
-        </span>
-      </li>
-    </ul>
+    <p class="aiuto">Carica una foto o uno screenshot del QR (meglio ritagliato sul solo QR): <b>Cambia</b> lo sostituisce,
+      <b>✕</b> lo toglie. Se un metodo non lo usate, spegnetelo: il bottone sparisce da Vendi e i QR restano salvati
+      per quando lo riaccendete. I QR finiscono anche nel backup, così arrivano sugli altri telefoni.</p>
+
+    <div class="metodo">
+      <h3>📱 Satispay</h3>
+      <label class="interruttore"><input type="checkbox" :checked="metodoAttivo('satispay')"
+        @change="stato.pagamenti.satispay = $event.target.checked" /> Usa in Vendi</label>
+    </div>
+    <template v-if="metodoAttivo('satispay')">
+      <p class="aiuto">In Vendi si sceglie il socio e compare il suo QR. Se qualcuno ha caricato il QR, compaiono solo i soci con il QR.</p>
+      <ul class="lista qr-lista">
+        <li v-for="s in stato.soci" :key="'qr' + s.id">
+          <img v-if="s.satispayQr" :src="s.satispayQr" alt="" class="qr-mini" />
+          <span v-else class="qr-mini vuoto-qr">—</span>
+          <span class="titolo">Satispay<br /><small>{{ s.nome }}</small></span>
+          <span class="riga stretta">
+            <label class="btn grigio">{{ s.satispayQr ? 'Cambia' : 'Carica' }}
+              <input type="file" accept="image/*" hidden @change="caricaQr($event, (d) => (s.satispayQr = d))" /></label>
+            <button v-if="s.satispayQr" class="mini" title="Togli QR"
+                    @click="togliQr(`il QR Satispay di ${s.nome}`, () => delete s.satispayQr)">✕</button>
+          </span>
+        </li>
+      </ul>
+    </template>
+    <p v-else class="aiuto metodo-spento">Spento: in Vendi non compare.</p>
+
+    <div class="metodo">
+      <h3>🅿️ PayPal</h3>
+      <label class="interruttore"><input type="checkbox" :checked="metodoAttivo('paypal')"
+        @change="stato.pagamenti.paypal = $event.target.checked" /> Usa in Vendi</label>
+    </div>
+    <template v-if="metodoAttivo('paypal')">
+      <p class="aiuto">In Vendi compare il QR del banco; se un socio carica il suo QR PayPal, si sceglie tra banco e socio.</p>
+      <ul class="lista qr-lista">
+        <li>
+          <img v-if="stato.pagamenti.paypalQr" :src="stato.pagamenti.paypalQr" alt="" class="qr-mini" />
+          <span v-else class="qr-mini vuoto-qr">—</span>
+          <span class="titolo">PayPal<br /><small>del banco</small></span>
+          <span class="riga stretta">
+            <label class="btn grigio">{{ stato.pagamenti.paypalQr ? 'Cambia' : 'Carica' }}
+              <input type="file" accept="image/*" hidden @change="caricaQr($event, (d) => (stato.pagamenti.paypalQr = d))" /></label>
+            <button v-if="stato.pagamenti.paypalQr" class="mini" title="Togli QR"
+                    @click="togliQr('il QR PayPal del banco', () => (stato.pagamenti.paypalQr = ''))">✕</button>
+          </span>
+        </li>
+        <li v-for="s in stato.soci" :key="'pp' + s.id">
+          <img v-if="s.paypalQr" :src="s.paypalQr" alt="" class="qr-mini" />
+          <span v-else class="qr-mini vuoto-qr">—</span>
+          <span class="titolo">PayPal<br /><small>{{ s.nome }}</small></span>
+          <span class="riga stretta">
+            <label class="btn grigio">{{ s.paypalQr ? 'Cambia' : 'Carica' }}
+              <input type="file" accept="image/*" hidden @change="caricaQr($event, (d) => (s.paypalQr = d))" /></label>
+            <button v-if="s.paypalQr" class="mini" title="Togli QR"
+                    @click="togliQr(`il QR PayPal di ${s.nome}`, () => delete s.paypalQr)">✕</button>
+          </span>
+        </li>
+      </ul>
+    </template>
+    <p v-else class="aiuto metodo-spento">Spento: in Vendi non compare.</p>
 
   </div>
 </template>
