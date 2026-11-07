@@ -37,8 +37,10 @@ Contiene le regole di lavoro del progetto: valgono per Claude e per chiunque con
 - **`main`** è la versione pubblicata: ogni merge su `main` ripubblica il sito. Ci si arriva solo
   da un branch `release/…` o `hotfix/…`.
 - **`develop`** è il branch di integrazione: tutto il lavoro nuovo parte da qui e torna qui.
-- **User story e task** stanno su GitHub Issues, con le etichette `user story`, `task` e `bug`.
-  Ogni task è una sotto-issue della sua user story. Ogni release ha una milestone (es. `v1.1.0`).
+- **User story e task** stanno su GitHub Issues e usano le etichette predefinite di GitHub:
+  una user story è una issue con `enhancement`, un errore è una issue con `bug`, e ogni task è una
+  sotto-issue della sua user story (`documentation`, `question`… se servono). Ogni release ha una
+  milestone (es. `v1.1.0`).
 
 | Branch | Parte da | PR verso | Quando |
 |---|---|---|---|
