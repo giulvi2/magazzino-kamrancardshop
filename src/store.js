@@ -318,21 +318,93 @@ export function esportaVenditeCsv() {
   scarica(`vendite-${oggi()}.csv`, csv(righe), 'text/csv')
 }
 
-// Importa un CSV (es. da Excel) con colonne: Codice;Titolo;Prezzo;Quantità;Categoria
-export function importaMagazzinoCsv(testo) {
-  const linee = testo.replace(/^﻿/, '').split(/\r?\n/).filter((l) => l.trim())
-  const sep = (linee[0].match(/;/g) || []).length >= (linee[0].match(/,/g) || []).length ? ';' : ','
-  let aggiunti = 0
-  for (const [i, linea] of linee.entries()) {
-    const c = linea.split(sep).map((x) => x.trim().replace(/^"|"$/g, ''))
-    if (i === 0 && /codice|titolo/i.test(linea)) continue // intestazione
-    const [codice, titolo, prezzo, quantita, categoria] = c
-    const esistente = trovaPerCodice(codice)
-    if (esistente) esistente.quantita += parseInt(quantita) || 0
-    else salvaArticolo({ codice, titolo, prezzo: aCentesimi(prezzo), quantita: quantita || 1, categoria })
-    aggiunti++
+// Legge un CSV: separatore ";" o ",", celle tra virgolette (anche con ; a capo o "" dentro).
+// Restituisce un elenco di righe, ognuna un elenco di celle.
+function leggiCsv(testo) {
+  testo = testo.replace(/^﻿/, '')
+  const primaLinea = testo.split(/\r?\n/, 1)[0]
+  const sep = (primaLinea.match(/;/g) || []).length >= (primaLinea.match(/,/g) || []).length ? ';' : ','
+  const righe = []
+  let riga = [], cella = '', virgolette = false
+  for (let i = 0; i < testo.length; i++) {
+    const ch = testo[i]
+    if (virgolette) {
+      if (ch === '"' && testo[i + 1] === '"') { cella += '"'; i++ }
+      else if (ch === '"') virgolette = false
+      else cella += ch
+    } else if (ch === '"') virgolette = true
+    else if (ch === sep) { riga.push(cella.trim()); cella = '' }
+    else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && testo[i + 1] === '\n') i++
+      riga.push(cella.trim()); righe.push(riga); riga = []; cella = ''
+    } else cella += ch
   }
-  return aggiunti
+  riga.push(cella.trim()); righe.push(riga)
+  return righe.filter((r) => r.some((c) => c !== ''))
+}
+
+// Nomi delle colonne riconosciuti (minuscole, senza accenti) → campo dell'articolo
+const COLONNE = {
+  codice: 'codice', titolo: 'titolo', prezzo: 'prezzo', quantita: 'quantita', qta: 'quantita',
+  categoria: 'categoria', note: 'note', proprietario: 'proprietario', socio: 'proprietario',
+  'prezzo acquisto': 'acquisto', 'prezzo di acquisto': 'acquisto', acquisto: 'acquisto', anno: 'anno',
+}
+// Ordine delle colonne se il file non ha l'intestazione (lo stesso dell'esportazione)
+const ORDINE_BASE = ['codice', 'titolo', 'prezzo', 'quantita', 'categoria', 'note', 'proprietario', 'acquisto', 'anno']
+const semplice = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+
+// Importa il magazzino da un CSV: quello esportato dall'app ("Magazzino (CSV)") oppure
+// un foglio Excel salvato come CSV. Le colonne si riconoscono dall'intestazione
+// (Codice, Titolo, Prezzo, Quantità, Categoria, Note, Proprietario, Prezzo acquisto, Anno),
+// in qualsiasi ordine; senza intestazione vale l'ordine dell'esportazione.
+// Il proprietario si scrive con il nome del socio (come nella scheda Soci).
+// Gli articoli già presenti (stesso codice, oppure senza codice con stesso titolo e
+// categoria) vengono aggiornati con i dati del CSV invece di essere aggiunti di nuovo:
+// prima si chiede conferma con conferma(quanti); se risponde no non si importa nulla.
+// Le celle vuote del CSV non cancellano i dati che l'articolo ha già.
+export function importaMagazzinoCsv(testo, conferma = () => true) {
+  const righe = leggiCsv(testo)
+  if (!righe.length) throw new Error('il file è vuoto')
+  let ordine = ORDINE_BASE
+  if (righe[0].some((c) => ['codice', 'titolo'].includes(semplice(c)))) {
+    ordine = righe.shift().map((c) => COLONNE[semplice(c)] || '')
+  }
+  const dati = righe.map((r) => Object.fromEntries(ordine.map((campo, i) => [campo, r[i] ?? '']).filter(([campo]) => campo)))
+
+  const chiave = (titolo, categoria) => semplice(titolo) + '|' + semplice(categoria)
+  const trova = (d) => d.codice
+    ? trovaPerCodice(d.codice)
+    : stato.articoli.find((a) => !a.codice && chiave(a.titolo, a.categoria) === chiave(d.titolo, d.categoria)) || null
+  const presenti = dati.filter(trova).length
+  if (presenti && !conferma(presenti)) return null
+
+  const sociSconosciuti = new Set()
+  let aggiunti = 0, aggiornati = 0
+  for (const d of dati) {
+    let proprietario = ''
+    if (d.proprietario) {
+      proprietario = stato.soci.find((s) => semplice(s.nome) === semplice(d.proprietario))?.id || ''
+      if (!proprietario) sociSconosciuti.add(d.proprietario)
+    }
+    const esistente = trova(d)
+    const vecchio = esistente || {}
+    const pieno = (v) => v !== undefined && v !== ''
+    salvaArticolo({
+      ...vecchio,
+      codice: pieno(d.codice) ? d.codice : vecchio.codice,
+      titolo: pieno(d.titolo) ? d.titolo : vecchio.titolo,
+      prezzo: pieno(d.prezzo) ? aCentesimi(d.prezzo) : (vecchio.prezzo || 0),
+      quantita: pieno(d.quantita) ? d.quantita : (esistente ? vecchio.quantita : 1),
+      categoria: pieno(d.categoria) ? d.categoria : vecchio.categoria,
+      note: pieno(d.note) ? d.note : vecchio.note,
+      proprietario: proprietario || vecchio.proprietario || '',
+      acquisto: pieno(d.acquisto) ? aAcquisto(d.acquisto) : vecchio.acquisto,
+      anno: pieno(d.anno) ? d.anno : vecchio.anno,
+    })
+    if (esistente) aggiornati++
+    else aggiunti++
+  }
+  return { aggiunti, aggiornati, sociSconosciuti: [...sociSconosciuti] }
 }
 
 // Suono + vibrazione quando lo scanner legge un codice

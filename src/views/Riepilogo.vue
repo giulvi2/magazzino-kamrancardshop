@@ -32,12 +32,19 @@ async function leggiFile(evento, tipo) {
       if (nonTrovati.length) msg += `\nArticoli non trovati in questo magazzino (giacenza non scalata): ${nonTrovati.join(', ')}`
       alert(msg)
     } else {
-      alert(`Importate ${importaMagazzinoCsv(testo)} righe`)
+      const esito = importaMagazzinoCsv(testo, (n) => confirm(
+        `${n} articoli del file ci sono già in magazzino: verranno AGGIORNATI con i dati del file `
+        + '(quantità, prezzo, proprietario…), non aggiunti di nuovo. Continuare?'))
+      if (!esito) return
+      let msg = `Articoli nuovi: ${esito.aggiunti}\nArticoli aggiornati: ${esito.aggiornati}`
+      if (esito.sociSconosciuti.length) msg += `\nProprietari non trovati tra i soci (lasciati vuoti): ${esito.sociSconosciuti.join(', ')}`
+      alert(msg)
     }
   } catch (e) {
     alert('File non valido: ' + e.message)
+  } finally {
+    evento.target.value = '' // così si può scegliere di nuovo lo stesso file
   }
-  evento.target.value = ''
 }
 
 function azzeraVendite() {
@@ -98,14 +105,16 @@ function azzeraVendite() {
     <h2>Dati</h2>
     <div class="griglia">
       <button class="btn" @click="esportaBackup">💾 Backup (JSON)</button>
-      <label class="btn grigio">📂 Ripristina backup<input type="file" accept=".json" hidden @change="leggiFile($event, 'json')" /></label>
+      <label class="btn grigio">📂 Ripristina backup<input type="file" accept=".json,application/json,text/plain" hidden @change="leggiFile($event, 'json')" /></label>
       <button class="btn" @click="esportaVenditeCsv">📊 Vendite (CSV)</button>
       <button class="btn" @click="esportaMagazzinoCsv">📦 Magazzino (CSV)</button>
-      <label class="btn grigio">🔗 Unisci vendite da altro telefono<input type="file" accept=".json" hidden @change="leggiFile($event, 'unisci')" /></label>
-      <label class="btn grigio">📥 Importa CSV magazzino<input type="file" accept=".csv,.txt" hidden @change="leggiFile($event, 'csv')" /></label>
+      <label class="btn grigio">🔗 Unisci vendite da altro telefono<input type="file" accept=".json,application/json,text/plain" hidden @change="leggiFile($event, 'unisci')" /></label>
+      <label class="btn grigio">📥 Importa CSV magazzino<input type="file" accept=".csv,text/csv,.txt,text/plain" hidden @change="leggiFile($event, 'csv')" /></label>
       <button class="btn grigio" @click="azzeraVendite">🗑 Azzera vendite</button>
     </div>
-    <p class="aiuto">CSV da importare: colonne <code>Codice;Titolo;Prezzo;Quantità;Categoria</code> (Categoria facoltativa) (va bene un foglio Excel salvato come CSV).
+    <p class="aiuto">CSV da importare: lo stesso file di <i>Magazzino (CSV)</i>, oppure un foglio Excel salvato come CSV con le colonne
+      <code>Codice;Titolo;Prezzo;Quantità;Categoria;Note;Proprietario;Prezzo acquisto</code> (servono solo Titolo e Prezzo;
+      il proprietario si scrive con il nome del socio). Gli articoli già presenti vengono aggiornati, non doppiati.
       I dati restano solo su questo telefono: fai un backup a fine giornata.</p>
     <p class="aiuto"><b>Più telefoni:</b> la mattina tutti ripristinano lo stesso backup. A fine giornata ogni telefono fa
       <i>Backup (JSON)</i> e lo manda alla cassa principale, che usa <i>Unisci vendite da altro telefono</i>:
