@@ -15,6 +15,7 @@ function completa(dati) {
   if (!Array.isArray(dati.spese)) dati.spese = []
   // QR dei pagamenti: Satispay è in ogni socio (socio.satispayQr), PayPal è uno per il banco
   if (!dati.pagamenti || typeof dati.pagamenti !== 'object') dati.pagamenti = { paypalQr: '' }
+  dati.categorie = categorieValide(dati.categorie)
   return dati
 }
 
@@ -47,11 +48,70 @@ export const CATEGORIE_BASE = ['Fumetti', 'Manga', 'Carte', 'Action figure', 'Ga
 export const categorie = computed(() =>
   [...new Set(stato.articoli.map((a) => a.categoria).filter(Boolean))].sort())
 
+// ---- Gestione categorie (pagina Impostazioni) ----
+// stato.categorie = { aggiunte: [...], nascoste: [...] }
+// - aggiunte: categorie create dalle Impostazioni, anche se nessun articolo le usa ancora
+// - nascoste: categorie base eliminate, che non vanno più proposte (in minuscolo)
+// I dati salvati prima di questa versione non hanno il campo: si parte con liste vuote.
+function categorieValide(c) {
+  const lista = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string' && x.trim()) : [])
+  return { aggiunte: lista(c?.aggiunte), nascoste: lista(c?.nascoste) }
+}
+const chiave = (c) => String(c || '').trim().toLowerCase()
+// Toglie i doppioni anche se scritti con maiuscole diverse (tiene il primo)
+export function senzaDoppioni(lista) {
+  const viste = new Set()
+  return lista.filter((c) => {
+    const k = chiave(c)
+    if (!k || viste.has(k)) return false
+    viste.add(k)
+    return true
+  })
+}
+// Tutte le categorie da proporre: base (tranne le eliminate), aggiunte e quelle usate
+export const tutteCategorie = computed(() => {
+  const nascoste = new Set(stato.categorie.nascoste.map(chiave))
+  return senzaDoppioni([
+    ...CATEGORIE_BASE.filter((c) => !nascoste.has(chiave(c))),
+    ...stato.categorie.aggiunte,
+    ...categorie.value,
+  ])
+})
+// Quanti articoli usano una categoria
+export const articoliInCategoria = (c) => stato.articoli.filter((a) => chiave(a.categoria) === chiave(c)).length
+
+export function aggiungiCategoria(nome) {
+  const c = String(nome || '').trim()
+  if (!c) return
+  // una categoria base eliminata torna visibile
+  stato.categorie.nascoste = stato.categorie.nascoste.filter((x) => chiave(x) !== chiave(c))
+  if (!tutteCategorie.value.some((x) => chiave(x) === chiave(c))) stato.categorie.aggiunte.push(c)
+}
+
+// Elimina una categoria. Gli articoli che la usano passano a "destinazione"
+// ('' = senza categoria); se la nuova categoria non ha l'anno, l'anno si toglie.
+// Restituisce quanti articoli sono stati spostati.
+export function eliminaCategoria(nome, destinazione = '') {
+  const k = chiave(nome)
+  const dest = chiave(destinazione) === k ? '' : String(destinazione || '').trim()
+  let spostati = 0
+  for (const a of stato.articoli) {
+    if (chiave(a.categoria) !== k) continue
+    a.categoria = dest
+    if (!conAnno(dest)) a.anno = ''
+    spostati++
+  }
+  stato.categorie.aggiunte = stato.categorie.aggiunte.filter((x) => chiave(x) !== k)
+  if (CATEGORIE_BASE.some((x) => chiave(x) === k) && !stato.categorie.nascoste.some((x) => chiave(x) === k))
+    stato.categorie.nascoste.push(nome)
+  return spostati
+}
+
 // ---- Anno ----
-// Fumetti e carte possono avere l'anno (di uscita o di stampa). Gli articoli salvati
-// prima di questa versione non hanno il campo: vale come "non indicato" ('').
-// Vale anche per "Fumetto", "Carta", "Carte Pokémon"… (conta l'inizio del nome).
-export const conAnno = (categoria) => /^(fumett|cart)/i.test(String(categoria || '').trim())
+// Fumetti, carte, manga e libri possono avere l'anno (di uscita o di stampa). Gli articoli
+// salvati prima di questa versione non hanno il campo: vale come "non indicato" ('').
+// Vale anche per "Fumetto", "Carta", "Libro", "Carte Pokémon"… (conta l'inizio del nome).
+export const conAnno = (categoria) => /^(fumett|cart|manga|libr)/i.test(String(categoria || '').trim())
 // Solo cifre, al massimo 4 (es. "1998"); '' se vuoto
 export const pulisciAnno = (v) => String(v ?? '').replace(/\D/g, '').slice(0, 4)
 // Testo da mostrare in elenco: "Fumetti · 1998"
@@ -135,7 +195,7 @@ export function salvaArticolo(dati) {
     prezzo: dati.prezzo || 0,
     quantita: Math.max(0, parseInt(dati.quantita) || 0),
     categoria: (dati.categoria || '').trim(),
-    // l'anno si tiene solo per fumetti e carte
+    // l'anno si tiene solo per fumetti, carte, manga e libri
     anno: conAnno(dati.categoria) ? pulisciAnno(dati.anno) : '',
     note: (dati.note || '').trim(),
     proprietario: dati.proprietario || '',
@@ -303,6 +363,8 @@ export function importaBackup(testo) {
   if (Array.isArray(dati.soci)) stato.soci = dati.soci
   if (Array.isArray(dati.spese)) stato.spese = dati.spese
   if (dati.pagamenti && typeof dati.pagamenti === 'object') stato.pagamenti = { paypalQr: '', ...dati.pagamenti }
+  // un backup fatto prima delle Impostazioni non ha le categorie: si tengono quelle attuali
+  if (dati.categorie && typeof dati.categorie === 'object') stato.categorie = categorieValide(dati.categorie)
 }
 
 // Unisce le vendite di un altro telefono (dal suo file di backup JSON).

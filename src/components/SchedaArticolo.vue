@@ -4,7 +4,7 @@ import { reactive, ref, computed, onMounted, nextTick } from 'vue'
 import StampaEtichette from './StampaEtichette.vue'
 import {
   stato, salvaArticolo, eliminaArticolo, aCentesimi, daCentesimi, aAcquisto,
-  categorie, CATEGORIE_BASE, ultimoProprietario, conAnno, pulisciAnno,
+  tutteCategorie, senzaDoppioni, ultimoProprietario, conAnno, pulisciAnno,
 } from '../store'
 import { isIsbn, cercaIsbn, descrizioneIsbn } from '../isbn'
 
@@ -45,17 +45,10 @@ const etichetta = ref(null) // articolo di cui stampare l'etichetta QR
 const scrivoCategoria = ref(false) // si sta scrivendo una categoria nuova
 const campoCategoria = ref(null)
 const elencoCategorie = computed(() => {
-  const tutte = [...CATEGORIE_BASE, ...categorie.value]
+  const tutte = [...tutteCategorie.value]
   const attuale = form.categoria.trim()
   if (attuale && !scrivoCategoria.value) tutte.push(attuale)
-  // niente doppioni, anche se scritti con maiuscole diverse
-  const viste = new Set()
-  return tutte.filter((c) => {
-    const k = c.toLowerCase()
-    if (viste.has(k)) return false
-    viste.add(k)
-    return true
-  })
+  return senzaDoppioni(tutte) // niente doppioni, anche se scritti con maiuscole diverse
 })
 const uguali = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase()
 function scegliCategoria(c) {
@@ -68,7 +61,7 @@ async function nuovaCategoria() {
   await nextTick()
   campoCategoria.value?.focus()
 }
-// Campo anno solo per fumetti e carte
+// Campo anno solo per fumetti, carte, manga e libri
 const mostraAnno = computed(() => conAnno(form.categoria))
 
 // Salva le modifiche e apre la stampa dell'etichetta di questo articolo
