@@ -46,7 +46,7 @@ Contiene le regole di lavoro del progetto: valgono per Claude e per chiunque con
 | Branch | Parte da | PR verso | Quando |
 |---|---|---|---|
 | `userstory/<n>-descrizione` | `develop` | `develop` | una user story (issue n. `<n>`) |
-| `task/<n>-descrizione` | `develop` | `develop` (o il branch `userstory/…`) | un task o un bug non urgente (issue n. `<n>`) |
+| `task/<n>-descrizione` | `develop` o il branch `userstory/…` | il branch da cui parte | un task o un bug non urgente (issue n. `<n>`) |
 | `release/x.y.z` | `develop` | `main`, poi back merge in `develop` | per pubblicare una versione |
 | `hotfix/x.y.z` | `main` | `main`, poi back merge in `develop` | errore urgente sul sito pubblicato |
 
