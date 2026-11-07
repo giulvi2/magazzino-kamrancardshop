@@ -16,6 +16,13 @@ function completa(dati) {
   // QR dei pagamenti: Satispay è in ogni socio (socio.satispayQr), PayPal è uno per il banco
   if (!dati.pagamenti || typeof dati.pagamenti !== 'object') dati.pagamenti = { paypalQr: '' }
   dati.categorie = categorieValide(dati.categorie)
+  // Promemoria backup: ogni = ogni quante vendite ricordarlo (0 = mai), daUltimo = vendite fatte
+  // su questo telefono dall'ultimo backup. I dati salvati prima di questa versione non lo hanno.
+  const b = dati.backup && typeof dati.backup === 'object' ? dati.backup : {}
+  dati.backup = {
+    ogni: Number.isInteger(b.ogni) && b.ogni >= 0 ? b.ogni : 10,
+    daUltimo: Number.isInteger(b.daUltimo) && b.daUltimo >= 0 ? b.daUltimo : 0,
+  }
   return dati
 }
 
@@ -214,36 +221,74 @@ export function eliminaArticolo(id) {
   stato.articoli = stato.articoli.filter((a) => a.id !== id)
 }
 
+// ---- Sconto / prezzo trattato ----
+// Ogni riga venduta può avere "sconto": i centesimi tolti a quella riga (per tutti i suoi pezzi).
+// Le vendite salvate prima di questa versione non lo hanno: vale 0.
+// Quanto si è incassato davvero con una riga
+export const incassoRiga = (r) => (r.prezzo || 0) * (r.qta || 0) - (r.sconto || 0)
+
+// Divide uno sconto (in centesimi) tra le righe in proporzione al loro importo, così ogni
+// socio "paga" la sua parte di sconto. I centesimi avanzati dall'arrotondamento vanno
+// alle righe più care. Restituisce gli sconti nello stesso ordine delle righe.
+export function ripartisciSconto(righe, sconto) {
+  const importi = righe.map((r) => (r.prezzo || 0) * (r.qta || 0))
+  const tot = importi.reduce((s, x) => s + x, 0)
+  sconto = Math.max(0, Math.min(Math.round(sconto) || 0, tot))
+  if (!sconto) return righe.map(() => 0)
+  const parti = importi.map((x) => Math.floor((sconto * x) / tot))
+  let avanzo = sconto - parti.reduce((s, x) => s + x, 0)
+  const ordine = importi.map((x, i) => i).sort((a, b) => importi[b] - importi[a])
+  for (let k = 0; avanzo > 0; k = (k + 1) % ordine.length) {
+    const i = ordine[k]
+    if (parti[i] < importi[i]) { parti[i]++; avanzo-- }
+  }
+  return parti
+}
+
 // righe: [{ articoloId, titolo, codice, prezzo, qta }]
 // pagamento: 'contanti' | 'carta' | 'satispay' | 'paypal'
 // incassatoDa: per Satispay, l'id del socio sul cui conto sono arrivati i soldi ('' = non indicato)
 // In ogni riga si salvano anche proprietario e prezzo di acquisto dell'articolo in quel
 // momento: così i conti restano giusti anche se poi l'articolo cambia o viene eliminato,
 // e arrivano uguali sugli altri telefoni con "Unisci vendite".
-export function registraVendita(righe, pagamento, incassatoDa = '') {
+// sconto: centesimi tolti al totale (prezzo trattato), divisi tra le righe con ripartisciSconto.
+// In ogni riga si salva anche "scalati": quanti pezzi sono stati tolti davvero dal magazzino
+// (meno di qta se se ne vendono più di quelli che risultavano), così l'annullo li rimette giusti.
+// Restituisce la vendita salvata e gli articoli rimasti esauriti.
+export function registraVendita(righe, pagamento, incassatoDa = '', sconto = 0) {
+  const esauriti = []
+  ripartisciSconto(righe, sconto).forEach((s, i) => { if (s) righe[i].sconto = s })
   for (const r of righe) {
     const a = stato.articoli.find((x) => x.id === r.articoloId)
     if (a) {
-      a.quantita = Math.max(0, a.quantita - r.qta)
+      r.scalati = Math.max(0, Math.min(a.quantita, r.qta))
+      a.quantita -= r.scalati
       r.proprietario = a.proprietario || ''
       r.acquisto = haAcquisto(a.acquisto) ? a.acquisto : null
+      if (a.quantita === 0) esauriti.push(a.titolo)
     }
   }
-  const totale = righe.reduce((s, r) => s + r.prezzo * r.qta, 0)
+  const totale = righe.reduce((s, r) => s + incassoRiga(r), 0)
   const vendita = { id: nuovoId(), data: new Date().toISOString(), righe, totale, pagamento }
   if (incassatoDa) vendita.incassatoDa = incassatoDa
   stato.vendite.unshift(vendita)
+  stato.backup.daUltimo++
+  return { vendita, esauriti }
 }
 
-// Annulla una vendita e rimette i pezzi in magazzino
+// Annulla una vendita e rimette i pezzi in magazzino.
+// Le vendite di prima di questa versione non hanno "scalati": si rimette qta.
+// Restituisce la vendita annullata (o null).
 export function annullaVendita(id) {
   const v = stato.vendite.find((x) => x.id === id)
-  if (!v) return
+  if (!v) return null
   for (const r of v.righe) {
     const a = stato.articoli.find((x) => x.id === r.articoloId)
-    if (a) a.quantita += r.qta
+    if (a) a.quantita += Number.isInteger(r.scalati) ? r.scalati : r.qta
   }
   stato.vendite = stato.vendite.filter((x) => x.id !== id)
+  if (stato.backup.daUltimo > 0) stato.backup.daUltimo-- // una vendita annullata non serve salvarla
+  return v
 }
 
 // Proprietario e prezzo di acquisto di una riga venduta. Se la riga non li ha
@@ -264,7 +309,8 @@ export function infoRiga(r) {
 // - nonCalcolabile: la parte di incasso fatta con pezzi senza prezzo di acquisto
 //   (il loro vero guadagno non si conosce)
 // - magazzino: pezzi ancora da vendere, il loro valore a prezzo di vendita e quanto sono costati
-export const contiPerSocio = computed(() => {
+// vendite: quelle da contare (tutte, oppure solo quelle di un giorno per la chiusura)
+export function contiSoci(vendite = stato.vendite) {
   const vuoto = (id, nome) => ({
     id, nome, incasso: 0, costo: 0, guadagno: 0, nonCalcolabile: 0, pezziVenduti: 0,
     pezzi: 0, valore: 0, costoMagazzino: 0,
@@ -272,11 +318,11 @@ export const contiPerSocio = computed(() => {
   const conti = new Map(stato.soci.map((s) => [s.id, vuoto(s.id, s.nome)]))
   const nessuno = vuoto('', 'Senza proprietario')
   const di = (id) => conti.get(id) || nessuno // socio tolto = senza proprietario
-  for (const v of stato.vendite) {
+  for (const v of vendite) {
     for (const r of v.righe || []) {
       const { proprietario, acquisto } = infoRiga(r)
       const c = di(proprietario)
-      const incasso = (r.prezzo || 0) * (r.qta || 0)
+      const incasso = incassoRiga(r)
       c.incasso += incasso
       c.pezziVenduti += r.qta || 0
       if (acquisto === null) c.nonCalcolabile += incasso
@@ -297,7 +343,8 @@ export const contiPerSocio = computed(() => {
     for (const k of Object.keys(c)) if (typeof c[k] === 'number') totale[k] += c[k]
   }
   return { righe, totale }
-})
+}
+export const contiPerSocio = computed(() => contiSoci(stato.vendite))
 
 // ---- Cassa comune: quote iniziali dei soci e spese pagate con quei soldi ----
 export const totaleQuote = computed(() => stato.soci.reduce((s, x) => s + (x.quota || 0), 0))
@@ -351,6 +398,7 @@ function scarica(nome, contenuto, tipo) {
 const oggi = () => new Date().toISOString().slice(0, 10)
 
 export function esportaBackup() {
+  stato.backup.daUltimo = 0
   scarica(`backup-magazzino-${oggi()}.json`, JSON.stringify(stato, null, 2), 'application/json')
 }
 
@@ -385,7 +433,8 @@ export function unisciVendite(testo) {
       // stesso articolo se ha lo stesso id, altrimenti si cerca per codice a barre
       const a = stato.articoli.find((x) => x.id === r.articoloId) || trovaPerCodice(r.codice)
       if (a) {
-        a.quantita = Math.max(0, a.quantita - r.qta)
+        r.scalati = Math.max(0, Math.min(a.quantita, r.qta))
+        a.quantita -= r.scalati
         r.articoloId = a.id // così "annulla vendita" rimette il pezzo nell'articolo giusto
       } else nonTrovati.add(r.titolo || r.codice || '?')
     }
@@ -421,13 +470,14 @@ export function esportaMagazzinoCsv() {
 }
 
 export function esportaVenditeCsv() {
-  const righe = [['Data', 'Ora', 'Codice', 'Titolo', 'Categoria', 'Quantità', 'Prezzo', 'Pagamento', 'Incassato da', 'Proprietario', 'Prezzo acquisto']]
+  const righe = [['Data', 'Ora', 'Codice', 'Titolo', 'Categoria', 'Quantità', 'Prezzo', 'Pagamento', 'Incassato da', 'Proprietario', 'Prezzo acquisto', 'Sconto', 'Incasso']]
   for (const v of [...stato.vendite].reverse()) {
     const d = new Date(v.data)
     for (const r of v.righe) {
       const { proprietario, acquisto } = infoRiga(r)
       righe.push([d.toLocaleDateString('it-IT'), d.toLocaleTimeString('it-IT'), r.codice, r.titolo, r.categoria, r.qta,
-        daCentesimi(r.prezzo), v.pagamento, nomeSocio(v.incassatoDa), nomeSocio(proprietario), acquisto === null ? '' : daCentesimi(acquisto)])
+        daCentesimi(r.prezzo), v.pagamento, nomeSocio(v.incassatoDa), nomeSocio(proprietario), acquisto === null ? '' : daCentesimi(acquisto),
+        r.sconto ? daCentesimi(r.sconto) : '', daCentesimi(incassoRiga(r))])
     }
   }
   scarica(`vendite-${oggi()}.csv`, csv(righe), 'text/csv')

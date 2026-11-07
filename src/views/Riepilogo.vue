@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import SpeseCassa from '../components/SpeseCassa.vue'
+import ChiusuraGiornata from '../components/ChiusuraGiornata.vue'
 import { leggiChiaveGoogle, salvaChiaveGoogle } from '../isbn'
 import {
   stato, euro, annullaVendita, esportaBackup, importaBackup,
@@ -9,6 +10,9 @@ import {
 } from '../store'
 
 // Chiave Google Books per la ricerca ISBN: resta solo su questo telefono
+// Finestra della chiusura della giornata
+const chiusuraAperta = ref(false)
+
 const chiaveGoogle = ref(leggiChiaveGoogle())
 const chiaveSalvata = ref(false)
 function salvaChiave() {
@@ -28,6 +32,7 @@ const satispayPerSocio = computed(() => {
   return [...m].map(([id, totale]) => ({ id, nome: nomeSocio(id) || 'socio non indicato', totale }))
 })
 const pezzi = computed(() => stato.vendite.reduce((s, v) => s + v.righe.reduce((x, r) => x + r.qta, 0), 0))
+const scontoDi = (v) => (v.righe || []).reduce((s, r) => s + (r.sconto || 0), 0)
 const ora = (iso) => new Date(iso).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 
 function annulla(v) {
@@ -73,6 +78,9 @@ function azzeraVendite() {
 
 <template>
   <section>
+    <button class="btn verde chiusura-apri" @click="chiusuraAperta = true">🧾 Chiusura della giornata</button>
+    <ChiusuraGiornata v-if="chiusuraAperta" @chiudi="chiusuraAperta = false" />
+
     <div class="cards">
       <div class="card evidenza"><small>Incasso</small><b>{{ euro(incasso) }}</b></div>
       <div class="card"><small>Contanti</small><b>{{ euro(perTipo('contanti')) }}</b></div>
@@ -120,6 +128,7 @@ function azzeraVendite() {
         <span class="titolo">
           {{ ora(v.data) }} · {{ v.pagamento }}<template v-if="v.incassatoDa"> ({{ nomeSocio(v.incassatoDa) }})</template><br />
           <small v-for="r in v.righe" :key="r.articoloId">{{ r.qta }}× {{ r.titolo }}<br /></small>
+          <small v-if="scontoDi(v)" class="rosso-testo">sconto − {{ euro(scontoDi(v)) }}<br /></small>
         </span>
         <span class="riga stretta"><b>{{ euro(v.totale) }}</b>
           <button class="mini" title="Annulla vendita" @click="annulla(v)">↩</button></span>

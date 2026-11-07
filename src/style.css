@@ -376,3 +376,22 @@ select:focus { border-color: var(--rosso); box-shadow: 0 0 0 4px rgba(226, 35, 2
   .menu { order: 3; flex: 1 0 100%; }
   .menu button { flex: 1; justify-content: center; padding: 0 10px; }
 }
+
+/* Riepilogo: pulsante della chiusura della giornata */
+.chiusura-apri { width: 100%; margin-bottom: 12px; }
+/* Le colonne del CSV in Riepilogo (<code> lungo) su telefono andavano a capo male e allargavano
+   la pagina oltre lo schermo: ora possono andare a capo in qualsiasi punto */
+code { overflow-wrap: anywhere; }
+
+/* ----- Vendi: ultima vendita, sconto, promemoria backup ----- */
+.ultima-vendita { background: #eef6ff; border: 1.5px solid var(--azzurro); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.ultima-vendita .btn { min-height: 40px; padding: 8px 14px; }
+.esauriti-avviso { width: 100%; margin: 0; color: var(--rosso); font-weight: 700; }
+.promemoria-backup .riga { margin-top: 8px; }
+.sconto-riepilogo { justify-content: space-between; font-size: 15px; }
+.cassa .btn.apri-sconto { width: 100%; min-height: 40px; padding: 8px; font-size: 14px; margin-bottom: 4px; }
+.box-sconto { border: 1.5px dashed var(--bordo); border-radius: 12px; padding: 8px 10px; margin-bottom: 4px; }
+.box-sconto .chips { margin-top: 6px; }
+.box-sconto p { margin: 6px 0 0; }
+.box-sconto .chips { flex-wrap: nowrap; gap: 6px; }
+.box-sconto .chips button { padding: 6px 10px; min-height: 36px; font-size: 14px; flex: 1; }
