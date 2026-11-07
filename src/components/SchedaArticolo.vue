@@ -1,10 +1,10 @@
 <script setup>
 // Form per creare o modificare un articolo
-import { reactive, ref, computed, onMounted } from 'vue'
+import { reactive, ref, computed, onMounted, nextTick } from 'vue'
 import StampaEtichette from './StampaEtichette.vue'
 import {
   stato, salvaArticolo, eliminaArticolo, aCentesimi, daCentesimi, aAcquisto,
-  categorie, CATEGORIE_BASE, ultimoProprietario,
+  categorie, CATEGORIE_BASE, ultimoProprietario, conAnno, pulisciAnno,
 } from '../store'
 import { isIsbn, cercaIsbn, descrizioneIsbn } from '../isbn'
 
@@ -18,6 +18,7 @@ const form = reactive({
   prezzo: props.articolo?.id ? daCentesimi(props.articolo.prezzo) : '',
   quantita: props.articolo?.quantita ?? 1,
   categoria: props.articolo?.categoria || '',
+  anno: props.articolo?.anno || '',
   note: props.articolo?.note || '',
   // nuovo articolo: si propone l'ultimo proprietario scelto, comodo quando si caricano
   // in fila tutte le cose della stessa persona
@@ -35,6 +36,40 @@ const trovato = ref(null) // dati arrivati da internet per l'ISBN
 const avviso = ref('') // esito della ricerca quando non ha trovato niente
 const codiceIsbn = computed(() => isIsbn(form.codice.trim()))
 const etichetta = ref(null) // articolo di cui stampare l'etichetta QR
+
+// ---- Categoria ----
+// Al posto della tendina (che su Safari mostra solo le voci che iniziano come il testo
+// già scritto, quindi non si riusciva a cambiare categoria) ci sono dei bottoni:
+// un tocco sceglie la categoria, un altro tocco sulla stessa la toglie.
+// "+ Nuova" apre un campo per scriverne una che non c'è ancora.
+const scrivoCategoria = ref(false) // si sta scrivendo una categoria nuova
+const campoCategoria = ref(null)
+const elencoCategorie = computed(() => {
+  const tutte = [...CATEGORIE_BASE, ...categorie.value]
+  const attuale = form.categoria.trim()
+  if (attuale && !scrivoCategoria.value) tutte.push(attuale)
+  // niente doppioni, anche se scritti con maiuscole diverse
+  const viste = new Set()
+  return tutte.filter((c) => {
+    const k = c.toLowerCase()
+    if (viste.has(k)) return false
+    viste.add(k)
+    return true
+  })
+})
+const uguali = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase()
+function scegliCategoria(c) {
+  scrivoCategoria.value = false
+  form.categoria = uguali(form.categoria, c) ? '' : c
+}
+async function nuovaCategoria() {
+  scrivoCategoria.value = true
+  form.categoria = ''
+  await nextTick()
+  campoCategoria.value?.focus()
+}
+// Campo anno solo per fumetti e carte
+const mostraAnno = computed(() => conAnno(form.categoria))
 
 // Salva le modifiche e apre la stampa dell'etichetta di questo articolo
 function stampaEtichetta() {
@@ -61,6 +96,7 @@ async function cercaOnline() {
     if (!form.titolo.trim() || form.titolo === 'Senza titolo') form.titolo = d.titolo
     if (!form.note.trim()) form.note = descrizioneIsbn(d)
     if (!form.categoria.trim() && d.categoria) form.categoria = d.categoria
+    if (!form.anno && d.anno) form.anno = pulisciAnno(String(d.anno).slice(0, 4))
   } catch (e) {
     avviso.value = 'Senza internet non posso cercare: compila la scheda a mano.'
   } finally {
@@ -109,12 +145,21 @@ function elimina() {
       <label>Titolo <small v-if="cerco">cerco online…</small>
         <input v-model="form.titolo" placeholder="Es. Tex n. 123, Charizard holo…" required autofocus />
       </label>
-      <label>Categoria
-        <input v-model="form.categoria" list="elenco-categorie" placeholder="Es. Fumetti, Carte, Manga…" />
-        <datalist id="elenco-categorie">
-          <option v-for="c in [...new Set([...categorie, ...CATEGORIE_BASE])]" :key="c" :value="c" />
-        </datalist>
-      </label>
+      <div class="categoria-anno">
+        <div class="campo-categoria">
+          <span class="etichetta-campo">Categoria</span>
+          <div class="chips a-capo" role="group" aria-label="Categoria">
+            <button v-for="c in elencoCategorie" :key="c" type="button"
+              :class="{ on: !scrivoCategoria && uguali(form.categoria, c) }" :aria-pressed="!scrivoCategoria && uguali(form.categoria, c)"
+              @click="scegliCategoria(c)">{{ c }}</button>
+            <button type="button" :class="{ on: scrivoCategoria }" @click="nuovaCategoria">＋ Nuova</button>
+          </div>
+          <input v-if="scrivoCategoria" ref="campoCategoria" v-model="form.categoria" placeholder="Scrivi la nuova categoria" enterkeyhint="done" />
+        </div>
+        <label v-if="mostraAnno" class="campo-anno">Anno
+          <input v-model="form.anno" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="Es. 1998" @input="form.anno = pulisciAnno(form.anno)" />
+        </label>
+      </div>
       <div class="riga">
         <label>Di chi è
           <select v-model="form.proprietario">
