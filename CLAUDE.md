@@ -68,7 +68,8 @@ npm run build    # deve terminare senza errori: crea dist/index.html + dist/sw.j
 - Prova nel browser con le dimensioni di iPad (es. 1024×768 e 768×1024) e di un telefono.
 - Prima di dire che qualcosa funziona, spiega **come è stato provato** (build, browser, emulazione…)
   e **cosa resta da provare su un dispositivo vero** (iPad o telefono: fotocamera, scanner, stampa).
-- Dopo il merge su `main`, la testata dell'app mostra la versione (data e ora della build): serve per
+- Dopo il merge su `main`, la testata dell'app mostra la versione (numero di `package.json` più data e ora della build,
+  es. `v1.0.0 · 07/11 14:00`): serve per
   controllare che il dispositivo stia usando quella nuova.
 
 ## Pull request

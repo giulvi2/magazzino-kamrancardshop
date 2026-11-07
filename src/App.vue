@@ -25,7 +25,7 @@ const versione = __VERSIONE__ // impostata da vite.config.js al momento della bu
       <img class="logo" :src="logoKamran" alt="Kamran" />
       <div>
         <h1>CardShop</h1>
-        <small>Magazzino &amp; cassa · versione {{ versione }}</small>
+        <small>Magazzino &amp; cassa · {{ versione }}</small>
       </div>
     </div>
     <!-- Su telefono il menu va in basso, su iPad/tablet resta qui in alto -->
