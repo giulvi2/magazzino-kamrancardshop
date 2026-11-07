@@ -472,7 +472,7 @@ const semplice = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
 // un foglio Excel salvato come CSV. Le colonne si riconoscono dall'intestazione
 // (Codice, Titolo, Prezzo, Quantità, Categoria, Note, Proprietario, Prezzo acquisto, Anno),
 // in qualsiasi ordine; senza intestazione vale l'ordine dell'esportazione.
-// Il proprietario si scrive con il nome del socio (come nella scheda Soci).
+// Il proprietario si scrive con il nome del socio (come in ⚙️ Impostazioni > Soci).
 // Gli articoli già presenti (stesso codice, oppure senza codice con stesso titolo e
 // categoria) vengono aggiornati con i dati del CSV invece di essere aggiunti di nuovo:
 // prima si chiede conferma con conferma(quanti); se risponde no non si importa nulla.

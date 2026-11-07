@@ -8,7 +8,7 @@ import { stato, euro, trovaPerCodice, pulisciCodice, bip, categorie, nomeSocio, 
 const filtro = ref('')
 const categoria = ref('') // filtro per categoria ('' = tutte)
 const socio = ref(null) // filtro per proprietario (null = tutti, '' = senza proprietario)
-// Chi ha un socio che non c'è più nella scheda Soci conta come "senza proprietario"
+// Chi ha un socio che non c'è più tra i soci (⚙️ Impostazioni) conta come "senza proprietario"
 const di = (a) => (stato.soci.some((s) => s.id === a.proprietario) ? a.proprietario : '')
 const ciSonoSenza = computed(() => stato.articoli.some((a) => !di(a)))
 const aperto = ref(null) // articolo in modifica (o nuovo)

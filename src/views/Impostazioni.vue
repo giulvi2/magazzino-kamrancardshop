@@ -1,6 +1,7 @@
 <script setup>
-// Impostazioni generali dell'app. Per ora: gestione delle categorie.
+// Impostazioni generali dell'app: soci e quote, QR per i pagamenti, categorie.
 import { ref, computed } from 'vue'
+import SociQuote from '../components/SociQuote.vue'
 import { tutteCategorie, articoliInCategoria, aggiungiCategoria, eliminaCategoria } from '../store'
 
 const nuova = ref('')
@@ -31,6 +32,8 @@ function confermaElimina() {
 
 <template>
   <section>
+    <SociQuote />
+
     <h2>Categorie</h2>
     <p class="aiuto">Le categorie che compaiono nella scheda articolo. Se elimini una categoria usata,
       scegli dove spostare i suoi articoli. Le modifiche finiscono anche nel backup.</p>
