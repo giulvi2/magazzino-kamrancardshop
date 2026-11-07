@@ -3,10 +3,14 @@ import { ref, computed } from 'vue'
 import CampoCodice from '../components/CampoCodice.vue'
 import SchedaArticolo from '../components/SchedaArticolo.vue'
 import logoBurst from '../assets/logo-burst.jpg'
-import { stato, euro, trovaPerCodice, pulisciCodice, registraVendita, aCentesimi, daCentesimi, bip } from '../store'
+import QrPagamento from '../components/QrPagamento.vue'
+import { stato, euro, trovaPerCodice, pulisciCodice, registraVendita, aCentesimi, daCentesimi, bip, cercaArticoli, nomeSocio } from '../store'
 
 const carrello = ref([]) // [{ articoloId, titolo, codice, prezzo, qta, disponibili }]
-const risultati = ref([]) // risultati della ricerca per titolo
+const risultati = ref([]) // suggerimenti / risultati della ricerca per titolo
+const cercato = ref('') // testo scritto a mano nel campo, per i suggerimenti
+const campo = ref(null) // il campo di ricerca, per svuotarlo quando si sceglie un suggerimento
+const qr = ref('') // pagamento con QR in corso: 'satispay' | 'paypal' | ''
 const sconosciuto = ref('') // codice letto ma non presente in magazzino
 const nuovo = ref(null) // articolo da creare
 const ricevuti = ref('') // contanti ricevuti dal cliente, per il resto
@@ -27,15 +31,25 @@ function aggiungi(a) {
   const nelCarrello = carrello.value.find((r) => r.articoloId === a.id).qta
   if (nelCarrello > a.quantita) avvisa(`Attenzione: in magazzino ne risultano ${a.quantita}`)
   risultati.value = []
+  cercato.value = ''
+  campo.value?.svuota()
   sconosciuto.value = ''
+}
+
+// Mentre si scrive a mano, si propongono subito gli articoli del magazzino
+function suScrivi(testo) {
+  cercato.value = testo.trim()
+  sconosciuto.value = ''
+  risultati.value = cercato.value.length >= 2 ? cercaArticoli(cercato.value) : []
 }
 
 function suCodice(valore) {
   const a = trovaPerCodice(valore)
   if (a) { bip(true); aggiungi(a); return }
   // non è un codice conosciuto: se contiene lettere cerchiamo per titolo
-  const q = valore.toLowerCase()
-  risultati.value = stato.articoli.filter((x) => x.titolo.toLowerCase().includes(q)).slice(0, 20)
+  cercato.value = ''
+  risultati.value = cercaArticoli(valore, 20)
+  if (risultati.value.length === 1) { aggiungi(risultati.value[0]); return } // uno solo: va dritto nel carrello
   if (risultati.value.length) return
   bip(false)
   sconosciuto.value = /^\d+$/.test(pulisciCodice(valore)) ? pulisciCodice(valore) : ''
@@ -52,10 +66,14 @@ function chiudiNuovo() {
 function togli(i) { carrello.value.splice(i, 1) }
 function cambiaPrezzo(riga, testo) { riga.prezzo = aCentesimi(testo) }
 
-function incassa(pagamento) {
+const NOMI_PAGAMENTO = { contanti: 'contanti', carta: 'carta', satispay: 'Satispay', paypal: 'PayPal' }
+
+function incassa(pagamento, incassatoDa = '') {
   if (!carrello.value.length) return
-  registraVendita(carrello.value.map((r) => ({ ...r })), pagamento)
-  avvisa(`Venduto! ${euro(totale.value)} (${pagamento})`)
+  registraVendita(carrello.value.map((r) => ({ ...r })), pagamento, incassatoDa)
+  const chi = incassatoDa ? ` a ${nomeSocio(incassatoDa)}` : ''
+  avvisa(`Venduto! ${euro(totale.value)} (${NOMI_PAGAMENTO[pagamento] || pagamento}${chi})`)
+  qr.value = ''
   carrello.value = []
   ricevuti.value = ''
 }
@@ -64,7 +82,8 @@ function incassa(pagamento) {
 <template>
   <section class="due-colonne">
    <div class="colonna-cerca">
-    <CampoCodice placeholder="Scansiona o cerca un titolo" :pausa="!!nuovo" @codice="suCodice" />
+    <CampoCodice ref="campo" placeholder="Scansiona o scrivi un titolo" :pausa="!!nuovo || !!qr"
+                 @codice="suCodice" @scrivi="suScrivi" />
 
     <div v-if="messaggio" class="avviso">{{ messaggio }}</div>
 
@@ -76,13 +95,15 @@ function incassa(pagamento) {
       </div>
     </div>
 
-    <ul v-if="risultati.length" class="lista">
-      <li v-for="a in risultati" :key="a.id" @click="aggiungi(a)">
-        <span class="titolo">{{ a.titolo }}</span>
-        <span class="pz">{{ euro(a.prezzo) }}<br /><small>disp. {{ a.quantita }}</small></span>
+    <ul v-if="risultati.length" class="lista suggerimenti">
+      <li v-for="a in risultati" :key="a.id" :class="{ esaurito: a.quantita <= 0 }" @click="aggiungi(a)">
+        <span class="titolo">{{ a.titolo }}
+          <small v-if="a.categoria || a.codice"><br />{{ [a.categoria, a.codice].filter(Boolean).join(' · ') }}</small></span>
+        <span class="pz"><b>{{ euro(a.prezzo) }}</b><br /><small>disp. {{ a.quantita }}</small></span>
       </li>
     </ul>
-    <p v-else-if="!sconosciuto" class="aiuto">Scansiona il codice a barre con la pistola o la fotocamera 📷, oppure scrivi parte del titolo e premi OK.</p>
+    <p v-else-if="cercato.length >= 2" class="aiuto">Nessun articolo con «{{ cercato }}» in magazzino.</p>
+    <p v-else-if="!sconosciuto" class="aiuto">Scansiona il codice a barre con la pistola o la fotocamera 📷, oppure scrivi parte del titolo: i suggerimenti compaiono mentre scrivi.</p>
    </div>
 
    <div class="colonna-cassa">
@@ -113,14 +134,17 @@ function incassa(pagamento) {
         <span v-if="ricevuti && resto >= 0">Resto <b>{{ euro(resto) }}</b></span>
         <span v-else-if="ricevuti" class="rosso-testo">Mancano {{ euro(-resto) }}</span>
       </label>
-      <div class="riga">
-        <button class="btn grigio" @click="carrello = []">Svuota</button>
+      <div class="pagamenti">
         <button class="btn verde grande" @click="incassa('contanti')">💶 Contanti</button>
         <button class="btn verde grande" @click="incassa('carta')">💳 Carta</button>
+        <button class="btn grande satispay" @click="qr = 'satispay'">📱 Satispay</button>
+        <button class="btn grande paypal" @click="qr = 'paypal'">🅿️ PayPal</button>
       </div>
+      <button class="btn grigio svuota" @click="carrello = []">Svuota carrello</button>
     </div>
    </div>
 
     <SchedaArticolo v-if="nuovo" :articolo="nuovo" @chiudi="chiudiNuovo" />
+    <QrPagamento v-if="qr" :tipo="qr" :totale="totale" @pagato="(socio) => incassa(qr, socio)" @chiudi="qr = ''" />
   </section>
 </template>

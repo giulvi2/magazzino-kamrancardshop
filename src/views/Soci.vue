@@ -4,6 +4,7 @@ import {
   stato, euro, aCentesimi, daCentesimi, totaleQuote, totaleSpese,
   aggiungiSocio, eliminaSocio, aggiungiSpesa, eliminaSpesa,
 } from '../store'
+import { leggiImmagine } from '../immagini'
 
 const rimasto = computed(() => totaleQuote.value - totaleSpese.value)
 const giorno = (iso) => new Date(iso).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
@@ -27,6 +28,17 @@ function segnaSpesa() {
 }
 function togliSpesa(sp) {
   if (confirm(`Cancellare la spesa "${sp.descrizione}" da ${euro(sp.importo)}?`)) eliminaSpesa(sp.id)
+}
+
+// ---- QR per i pagamenti: Satispay di ogni socio, PayPal del banco ----
+async function caricaQr(evento, salva) {
+  const file = evento.target.files[0]
+  evento.target.value = ''
+  if (!file) return
+  try { salva(await leggiImmagine(file)) } catch (e) { alert(e.message) }
+}
+function togliQr(testo, togli) {
+  if (confirm(`Togliere ${testo}?`)) togli()
 }
 </script>
 
@@ -58,6 +70,35 @@ function togliSpesa(sp) {
       <button class="btn grigio" @click="aggiungiSocio()">+ Aggiungi socio</button>
       <span class="totale-quote">Totale <b>{{ euro(totaleQuote) }}</b></span>
     </div>
+
+    <h2>QR per i pagamenti</h2>
+    <p class="aiuto">Carica una foto o uno screenshot del QR (meglio ritagliato sul solo QR).
+      In Vendi, con <b>Satispay</b> si sceglie il socio e compare il suo QR; con <b>PayPal</b> compare quello del banco.
+      I QR finiscono anche nel backup, così arrivano sugli altri telefoni.</p>
+    <ul class="lista qr-lista">
+      <li v-for="s in stato.soci" :key="'qr' + s.id">
+        <img v-if="s.satispayQr" :src="s.satispayQr" alt="" class="qr-mini" />
+        <span v-else class="qr-mini vuoto-qr">—</span>
+        <span class="titolo">Satispay<br /><small>{{ s.nome }}</small></span>
+        <span class="riga stretta">
+          <label class="btn grigio">{{ s.satispayQr ? 'Cambia' : 'Carica' }}
+            <input type="file" accept="image/*" hidden @change="caricaQr($event, (d) => (s.satispayQr = d))" /></label>
+          <button v-if="s.satispayQr" class="mini" title="Togli QR"
+                  @click="togliQr(`il QR Satispay di ${s.nome}`, () => delete s.satispayQr)">✕</button>
+        </span>
+      </li>
+      <li>
+        <img v-if="stato.pagamenti.paypalQr" :src="stato.pagamenti.paypalQr" alt="" class="qr-mini" />
+        <span v-else class="qr-mini vuoto-qr">—</span>
+        <span class="titolo">PayPal<br /><small>del banco</small></span>
+        <span class="riga stretta">
+          <label class="btn grigio">{{ stato.pagamenti.paypalQr ? 'Cambia' : 'Carica' }}
+            <input type="file" accept="image/*" hidden @change="caricaQr($event, (d) => (stato.pagamenti.paypalQr = d))" /></label>
+          <button v-if="stato.pagamenti.paypalQr" class="mini" title="Togli QR"
+                  @click="togliQr('il QR PayPal', () => (stato.pagamenti.paypalQr = ''))">✕</button>
+        </span>
+      </li>
+    </ul>
 
     <h2>Spese pagate con la cassa comune</h2>
     <form class="riga spesa-nuova" @submit.prevent="segnaSpesa">

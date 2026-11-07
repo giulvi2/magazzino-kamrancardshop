@@ -247,8 +247,7 @@ select:focus { border-color: var(--rosso); box-shadow: 0 0 0 4px rgba(226, 35, 2
   .due-colonne { grid-template-columns: minmax(0, 1fr) 460px; }
 }
 
-/* Pulsanti di pagamento: Svuota piccolo, Contanti e Carta grandi */
-.cassa .riga:last-child .btn.grigio { flex: 0 0 auto; padding: 12px; }
+/* Pulsanti di pagamento: vedi .pagamenti più sotto */
 
 /* Telefono: titolo del carrello su una riga intera, cassa più compatta */
 @media (max-width: 767px) {
@@ -316,3 +315,32 @@ select:focus { border-color: var(--rosso); box-shadow: 0 0 0 4px rgba(226, 35, 2
 .isbn-trovato div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .isbn-trovato small { color: var(--testo-tenue); font-size: 12px; }
 .isbn-avviso { margin: 0; font-size: 13px; color: var(--testo-tenue); }
+
+/* ----- Pagamenti: Contanti, Carta, Satispay, PayPal ----- */
+.pagamenti { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.btn.satispay { background: #f94c43; }
+.btn.paypal { background: #003087; }
+.cassa .btn.svuota { width: 100%; margin-top: 8px; min-height: 40px; padding: 8px; font-size: 14px; }
+.card .dettaglio { font-size: 12px; color: var(--testo-tenue); }
+
+/* Finestra con il QR da far inquadrare */
+.qr-pagamento { border-top: 6px solid #f94c43; }
+.qr-pagamento.paypal { border-top-color: #003087; }
+.qr-immagine {
+  display: grid; place-items: center; background: #fff; border: 1.5px solid var(--bordo);
+  border-radius: 16px; padding: 12px; min-height: 160px; flex: none;
+}
+.qr-immagine img { max-width: 100%; max-height: 50vh; object-fit: contain; display: block; }
+.qr-pagamento .btn:disabled { opacity: .5; }
+.qr-pagamento .chips { flex: none; }
+
+/* Scheda Soci: elenco dei QR */
+.qr-lista li { cursor: default; }
+.qr-mini { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; flex: none; border: 1px solid var(--bordo); }
+.vuoto-qr { display: grid; place-items: center; color: var(--testo-tenue); background: #faf8f4; }
+@media (min-width: 768px) {
+  .lista.qr-lista { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Suggerimenti mentre si scrive in Vendi */
+.suggerimenti { margin-top: 8px; }
