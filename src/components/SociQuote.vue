@@ -1,6 +1,7 @@
 <script setup>
 // Soci, quote messe nella cassa comune e QR per i pagamenti (dentro ⚙️ Impostazioni).
 // Le spese della cassa comune stanno nel Riepilogo (SpeseCassa.vue).
+import { computed } from 'vue'
 import {
   stato, euro, metodoAttivo, aCentesimi, daCentesimi, totaleQuote, aggiungiSocio, eliminaSocio,
 } from '../store'
@@ -20,6 +21,13 @@ async function caricaQr(evento, salva) {
   evento.target.value = ''
   if (!file) return
   try { salva(await leggiImmagine(file)) } catch (e) { alert(e.message) }
+}
+// Soci nella sezione QR: chi non avrà mai un QR (es. Kamran) si toglie e non sporca l'elenco.
+// Resta tra i soci; socio.senzaQr = true lo nasconde qui e nelle finestre QR di Vendi.
+const sociQr = computed(() => stato.soci.filter((s) => !s.senzaQr))
+function cambiaSocioQr(s) {
+  if (s.senzaQr) delete s.senzaQr
+  else s.senzaQr = true
 }
 function togliQr(testo, togli) {
   if (confirm(`Togliere ${testo}?`)) togli()
@@ -51,6 +59,14 @@ function togliQr(testo, togli) {
       <b>✕</b> lo toglie. Se un metodo non lo usate, spegnetelo: il bottone sparisce da Vendi e i QR restano salvati
       per quando lo riaccendete. I QR finiscono anche nel backup, così arrivano sugli altri telefoni.</p>
 
+    <p class="aiuto"><b>Chi usa i QR</b>: tocca un nome per toglierlo o rimetterlo. Chi è tolto non compare
+      qui sotto né in Vendi, ma resta tra i soci (e i suoi QR, se ne aveva, restano salvati).</p>
+    <div class="chips a-capo soci-qr">
+      <button v-for="s in stato.soci" :key="'chi' + s.id" :class="{ on: !s.senzaQr }" @click="cambiaSocioQr(s)">
+        {{ s.senzaQr ? '+' : '✓' }} {{ s.nome }}
+      </button>
+    </div>
+
     <div class="metodo">
       <h3>📱 Satispay</h3>
       <label class="interruttore"><input type="checkbox" :checked="metodoAttivo('satispay')"
@@ -59,7 +75,7 @@ function togliQr(testo, togli) {
     <template v-if="metodoAttivo('satispay')">
       <p class="aiuto">In Vendi si sceglie il socio e compare il suo QR. Se qualcuno ha caricato il QR, compaiono solo i soci con il QR.</p>
       <ul class="lista qr-lista">
-        <li v-for="s in stato.soci" :key="'qr' + s.id">
+        <li v-for="s in sociQr" :key="'qr' + s.id">
           <img v-if="s.satispayQr" :src="s.satispayQr" alt="" class="qr-mini" />
           <span v-else class="qr-mini vuoto-qr">—</span>
           <span class="titolo">Satispay<br /><small>{{ s.nome }}</small></span>
@@ -93,7 +109,7 @@ function togliQr(testo, togli) {
                     @click="togliQr('il QR PayPal del banco', () => (stato.pagamenti.paypalQr = ''))">✕</button>
           </span>
         </li>
-        <li v-for="s in stato.soci" :key="'pp' + s.id">
+        <li v-for="s in sociQr" :key="'pp' + s.id">
           <img v-if="s.paypalQr" :src="s.paypalQr" alt="" class="qr-mini" />
           <span v-else class="qr-mini vuoto-qr">—</span>
           <span class="titolo">PayPal<br /><small>{{ s.nome }}</small></span>
