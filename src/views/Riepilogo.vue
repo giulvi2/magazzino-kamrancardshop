@@ -3,11 +3,18 @@ import { computed } from 'vue'
 import {
   stato, euro, annullaVendita, esportaBackup, importaBackup,
   esportaMagazzinoCsv, esportaVenditeCsv, importaMagazzinoCsv, unisciVendite,
-  totaleQuote, totaleSpese, contiPerSocio,
+  totaleQuote, totaleSpese, contiPerSocio, nomeSocio,
 } from '../store'
 
 const incasso = computed(() => stato.vendite.reduce((s, v) => s + v.totale, 0))
 const perTipo = (t) => stato.vendite.filter((v) => v.pagamento === t).reduce((s, v) => s + v.totale, 0)
+// Satispay diviso per socio: i soldi arrivano sul conto di ognuno
+const satispayPerSocio = computed(() => {
+  const m = new Map()
+  for (const v of stato.vendite)
+    if (v.pagamento === 'satispay') m.set(v.incassatoDa || '', (m.get(v.incassatoDa || '') || 0) + v.totale)
+  return [...m].map(([id, totale]) => ({ id, nome: nomeSocio(id) || 'socio non indicato', totale }))
+})
 const pezzi = computed(() => stato.vendite.reduce((s, v) => s + v.righe.reduce((x, r) => x + r.qta, 0), 0))
 const ora = (iso) => new Date(iso).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 
@@ -52,6 +59,9 @@ function azzeraVendite() {
       <div class="card"><small>Contanti</small><b>{{ euro(perTipo('contanti')) }}</b></div>
       <div class="card"><small>Carta</small><b>{{ euro(perTipo('carta')) }}</b></div>
       <div class="card"><small>Pezzi venduti</small><b>{{ pezzi }}</b></div>
+      <div class="card"><small>Satispay</small><b>{{ euro(perTipo('satispay')) }}</b>
+        <span v-for="x in satispayPerSocio" :key="x.id" class="dettaglio">{{ x.nome }}: {{ euro(x.totale) }}</span></div>
+      <div class="card"><small>PayPal</small><b>{{ euro(perTipo('paypal')) }}</b></div>
     </div>
 
     <!-- Conti della cassa comune (scheda Soci) -->
@@ -87,7 +97,7 @@ function azzeraVendite() {
     <ul class="lista">
       <li v-for="v in stato.vendite" :key="v.id">
         <span class="titolo">
-          {{ ora(v.data) }} · {{ v.pagamento }}<br />
+          {{ ora(v.data) }} · {{ v.pagamento }}<template v-if="v.incassatoDa"> ({{ nomeSocio(v.incassatoDa) }})</template><br />
           <small v-for="r in v.righe" :key="r.articoloId">{{ r.qta }}× {{ r.titolo }}<br /></small>
         </span>
         <span class="riga stretta"><b>{{ euro(v.totale) }}</b>

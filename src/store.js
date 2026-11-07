@@ -13,6 +13,8 @@ function completa(dati) {
   if (!Array.isArray(dati.vendite)) dati.vendite = []
   if (!Array.isArray(dati.soci)) dati.soci = sociIniziali()
   if (!Array.isArray(dati.spese)) dati.spese = []
+  // QR dei pagamenti: Satispay è in ogni socio (socio.satispayQr), PayPal è uno per il banco
+  if (!dati.pagamenti || typeof dati.pagamenti !== 'object') dati.pagamenti = { paypalQr: '' }
   return dati
 }
 
@@ -27,7 +29,17 @@ function carica() {
 export const stato = reactive(carica())
 
 // Ogni modifica viene salvata subito
-watch(stato, () => localStorage.setItem(CHIAVE, JSON.stringify(stato)), { deep: true })
+// Se il telefono non ha più spazio (es. immagini QR troppo grandi) si avvisa una volta sola
+let avvisatoSpazio = false
+watch(stato, () => {
+  try {
+    localStorage.setItem(CHIAVE, JSON.stringify(stato))
+    avvisatoSpazio = false
+  } catch (e) {
+    if (!avvisatoSpazio) alert('Attenzione: spazio esaurito, le ultime modifiche NON sono salvate. Togli qualche immagine QR e fai un backup.')
+    avvisatoSpazio = true
+  }
+}, { deep: true })
 
 // Categorie proposte nel form; si possono scrivere anche categorie nuove
 export const CATEGORIE_BASE = ['Fumetti', 'Manga', 'Carte', 'Action figure', 'Gadget', 'Libri', 'Vinili']
@@ -92,6 +104,30 @@ const haAcquisto = (v) => typeof v === 'number' && v >= 0
 // Testo del campo "prezzo di acquisto" → centesimi, oppure null se il campo è vuoto
 export const aAcquisto = (testo) => (String(testo ?? '').trim() === '' ? null : Math.max(0, aCentesimi(testo)))
 
+// ---- Ricerca mentre si scrive (Vendi) ----
+// Toglie accenti e maiuscole: "perché" = "PERCHE"
+const normalizza = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
+// Articoli che contengono tutte le parole scritte (nel titolo, codice, categoria o note).
+// Prima quelli il cui titolo comincia con il testo, poi quelli ancora disponibili.
+export function cercaArticoli(testo, quanti = 12) {
+  const parole = normalizza(testo).split(/\s+/).filter(Boolean)
+  if (!parole.length) return []
+  const inizio = normalizza(testo).trim()
+  return stato.articoli
+    .map((a) => {
+      const titolo = normalizza(a.titolo)
+      const tutto = [titolo, normalizza(a.codice), normalizza(a.categoria), normalizza(a.note)].join(' ')
+      if (!parole.every((p) => tutto.includes(p))) return null
+      const punti = (titolo.startsWith(inizio) ? 2 : 0) + (a.quantita > 0 ? 1 : 0)
+      return { a, punti }
+    })
+    .filter(Boolean)
+    .sort((x, y) => y.punti - x.punti || x.a.titolo.localeCompare(y.a.titolo, 'it'))
+    .slice(0, quanti)
+    .map((x) => x.a)
+}
+
 export function salvaArticolo(dati) {
   const art = {
     titolo: (dati.titolo || '').trim() || 'Senza titolo',
@@ -119,10 +155,12 @@ export function eliminaArticolo(id) {
 }
 
 // righe: [{ articoloId, titolo, codice, prezzo, qta }]
+// pagamento: 'contanti' | 'carta' | 'satispay' | 'paypal'
+// incassatoDa: per Satispay, l'id del socio sul cui conto sono arrivati i soldi ('' = non indicato)
 // In ogni riga si salvano anche proprietario e prezzo di acquisto dell'articolo in quel
 // momento: così i conti restano giusti anche se poi l'articolo cambia o viene eliminato,
 // e arrivano uguali sugli altri telefoni con "Unisci vendite".
-export function registraVendita(righe, pagamento) {
+export function registraVendita(righe, pagamento, incassatoDa = '') {
   for (const r of righe) {
     const a = stato.articoli.find((x) => x.id === r.articoloId)
     if (a) {
@@ -132,7 +170,9 @@ export function registraVendita(righe, pagamento) {
     }
   }
   const totale = righe.reduce((s, r) => s + r.prezzo * r.qta, 0)
-  stato.vendite.unshift({ id: nuovoId(), data: new Date().toISOString(), righe, totale, pagamento })
+  const vendita = { id: nuovoId(), data: new Date().toISOString(), righe, totale, pagamento }
+  if (incassatoDa) vendita.incassatoDa = incassatoDa
+  stato.vendite.unshift(vendita)
 }
 
 // Annulla una vendita e rimette i pezzi in magazzino
@@ -262,6 +302,7 @@ export function importaBackup(testo) {
   // un backup fatto prima della cassa comune non ha soci e spese: si tengono quelli attuali
   if (Array.isArray(dati.soci)) stato.soci = dati.soci
   if (Array.isArray(dati.spese)) stato.spese = dati.spese
+  if (dati.pagamenti && typeof dati.pagamenti === 'object') stato.pagamenti = { paypalQr: '', ...dati.pagamenti }
 }
 
 // Unisce le vendite di un altro telefono (dal suo file di backup JSON).
@@ -318,13 +359,13 @@ export function esportaMagazzinoCsv() {
 }
 
 export function esportaVenditeCsv() {
-  const righe = [['Data', 'Ora', 'Codice', 'Titolo', 'Categoria', 'Quantità', 'Prezzo', 'Pagamento', 'Proprietario', 'Prezzo acquisto']]
+  const righe = [['Data', 'Ora', 'Codice', 'Titolo', 'Categoria', 'Quantità', 'Prezzo', 'Pagamento', 'Incassato da', 'Proprietario', 'Prezzo acquisto']]
   for (const v of [...stato.vendite].reverse()) {
     const d = new Date(v.data)
     for (const r of v.righe) {
       const { proprietario, acquisto } = infoRiga(r)
       righe.push([d.toLocaleDateString('it-IT'), d.toLocaleTimeString('it-IT'), r.codice, r.titolo, r.categoria, r.qta,
-        daCentesimi(r.prezzo), v.pagamento, nomeSocio(proprietario), acquisto === null ? '' : daCentesimi(acquisto)])
+        daCentesimi(r.prezzo), v.pagamento, nomeSocio(v.incassatoDa), nomeSocio(proprietario), acquisto === null ? '' : daCentesimi(acquisto)])
     }
   }
   scarica(`vendite-${oggi()}.csv`, csv(righe), 'text/csv')
