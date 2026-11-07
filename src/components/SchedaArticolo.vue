@@ -98,7 +98,9 @@ async function cercaOnline() {
     if (!form.categoria.trim() && d.categoria) form.categoria = d.categoria
     if (!form.anno && d.anno) form.anno = pulisciAnno(String(d.anno).slice(0, 4))
   } catch (e) {
-    avviso.value = 'Senza internet non posso cercare: compila la scheda a mano.'
+    avviso.value = e.message === 'google'
+      ? 'Google Books non risponde senza chiave (o la chiave non va): aggiungila in Riepilogo › Ricerca ISBN. Intanto compila a mano.'
+      : 'Senza internet non posso cercare: compila la scheda a mano.'
   } finally {
     cerco.value = false
   }

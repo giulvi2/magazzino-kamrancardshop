@@ -1,10 +1,21 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { leggiChiaveGoogle, salvaChiaveGoogle } from '../isbn'
 import {
   stato, euro, annullaVendita, esportaBackup, importaBackup,
   esportaMagazzinoCsv, esportaVenditeCsv, importaMagazzinoCsv, unisciVendite,
   totaleQuote, totaleSpese, contiPerSocio, nomeSocio,
 } from '../store'
+
+// Chiave Google Books per la ricerca ISBN: resta solo su questo telefono
+const chiaveGoogle = ref(leggiChiaveGoogle())
+const chiaveSalvata = ref(false)
+function salvaChiave() {
+  salvaChiaveGoogle(chiaveGoogle.value)
+  chiaveGoogle.value = leggiChiaveGoogle()
+  chiaveSalvata.value = true
+  setTimeout(() => (chiaveSalvata.value = false), 2000)
+}
 
 const incasso = computed(() => stato.vendite.reduce((s, v) => s + v.totale, 0))
 const perTipo = (t) => stato.vendite.filter((v) => v.pagamento === t).reduce((s, v) => s + v.totale, 0)
@@ -129,5 +140,15 @@ function azzeraVendite() {
     <p class="aiuto"><b>Più telefoni:</b> la mattina tutti ripristinano lo stesso backup. A fine giornata ogni telefono fa
       <i>Backup (JSON)</i> e lo manda alla cassa principale, che usa <i>Unisci vendite da altro telefono</i>:
       le vendite si sommano e le giacenze scendono. Unire due volte lo stesso file non conta doppio.</p>
+
+    <h2>Ricerca ISBN</h2>
+    <form class="riga" @submit.prevent="salvaChiave">
+      <input v-model="chiaveGoogle" placeholder="Chiave Google Books (facoltativa)" autocomplete="off"
+        autocapitalize="off" autocorrect="off" spellcheck="false" />
+      <button type="submit" class="btn">{{ chiaveSalvata ? 'Salvata ✓' : 'Salva' }}</button>
+    </form>
+    <p class="aiuto">Quando scansioni un libro o un fumetto con ISBN, l'app cerca titolo e autore su Google Books e Open Library.
+      Senza chiave Google Books spesso non risponde. La chiave è gratuita e resta solo su questo telefono
+      (non finisce nel backup): va incollata su ogni telefono. Lasciando il campo vuoto la si toglie.</p>
   </section>
 </template>
