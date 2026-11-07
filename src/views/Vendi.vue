@@ -4,7 +4,7 @@ import CampoCodice from '../components/CampoCodice.vue'
 import SchedaArticolo from '../components/SchedaArticolo.vue'
 import logoBurst from '../assets/logo-burst.jpg'
 import QrPagamento from '../components/QrPagamento.vue'
-import { stato, euro, trovaPerCodice, pulisciCodice, registraVendita, annullaVendita, aCentesimi, daCentesimi, bip, cercaArticoli, nomeSocio,
+import { stato, euro, trovaPerCodice, pulisciCodice, registraVendita, annullaVendita, aCentesimi, daCentesimi, bip, cercaArticoli, nomeSocio, metodoAttivo,
   esportaBackup } from '../store'
 
 const carrello = ref([]) // [{ articoloId, titolo, codice, prezzo, qta, disponibili }]
@@ -244,8 +244,8 @@ const oraVendita = (iso) => new Date(iso).toLocaleTimeString('it-IT', { hour: '2
       <div class="pagamenti">
         <button class="btn verde grande" @click="incassa('contanti')">💶 Contanti</button>
         <button class="btn verde grande" @click="incassa('carta')">💳 Carta</button>
-        <button class="btn grande satispay" @click="qr = 'satispay'">📱 Satispay</button>
-        <button class="btn grande paypal" @click="qr = 'paypal'">🅿️ PayPal</button>
+        <button v-if="metodoAttivo('satispay')" class="btn grande satispay" @click="qr = 'satispay'">📱 Satispay</button>
+        <button v-if="metodoAttivo('paypal')" class="btn grande paypal" @click="qr = 'paypal'">🅿️ PayPal</button>
       </div>
       <button class="btn grigio svuota" @click="carrello = []">Svuota carrello</button>
     </div>
