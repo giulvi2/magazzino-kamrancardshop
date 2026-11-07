@@ -18,8 +18,10 @@ App Vue 3 per gestire magazzino e vendite ai mercatini del collezionismo (fumett
   *Per socio*: incasso e guadagno di ognuno (vendita meno prezzo di acquisto) e il totale del banco.
   Se un articolo non ha il prezzo di acquisto il suo incasso conta tutto come guadagno, ed è mostrato
   a parte come *senza prezzo di acquisto*.
-- **Soci**: cassa comune. Quanto mette ogni socio all'inizio (Giulia, Soheil, Davide, Kamran;
-  nomi e numero di soci modificabili), le spese pagate con quei soldi (es. il suolo) e quanto resta.
+  In fondo ai conti della cassa comune si segnano le spese pagate con quei soldi (es. il suolo) e si vede quanto resta.
+- **⚙️ Impostazioni** (in alto a destra): soci e quote (quanto mette ognuno all'inizio: Giulia, Soheil,
+  Davide, Kamran; nomi e numero di soci modificabili), QR per i pagamenti (Satispay di ogni socio,
+  PayPal del banco) e categorie.
 
 ## Etichette QR
 Per gli articoli senza codice a barre (carte, action figure, gadget…) l'app stampa etichette adesive con un QR.

@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
+import SpeseCassa from '../components/SpeseCassa.vue'
 import { leggiChiaveGoogle, salvaChiaveGoogle } from '../isbn'
 import {
   stato, euro, annullaVendita, esportaBackup, importaBackup,
@@ -82,7 +83,7 @@ function azzeraVendite() {
       <div class="card"><small>PayPal</small><b>{{ euro(perTipo('paypal')) }}</b></div>
     </div>
 
-    <!-- Conti della cassa comune (scheda Soci) -->
+    <!-- Conti della cassa comune: quote in ⚙️ Impostazioni, spese qui sotto -->
     <div class="cards conti">
       <div class="card"><small>Messi dai soci</small><b>{{ euro(totaleQuote) }}</b></div>
       <div class="card"><small>Spese</small><b>{{ euro(totaleSpese) }}</b></div>
@@ -90,6 +91,8 @@ function azzeraVendite() {
         <b :class="{ 'rosso-testo': incasso - totaleSpese < 0 }">{{ euro(incasso - totaleSpese) }}</b></div>
       <div class="card"><small>Quote rimaste + incasso</small><b>{{ euro(totaleQuote - totaleSpese + incasso) }}</b></div>
     </div>
+
+    <SpeseCassa />
 
     <!-- Conti di ognuno: cosa ha venduto delle sue cose e quanto ci ha guadagnato -->
     <h2>Per socio</h2>

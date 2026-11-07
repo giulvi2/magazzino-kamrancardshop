@@ -2,7 +2,7 @@
 // Finestra per farsi pagare con Satispay o PayPal: mostra il QR da far inquadrare
 // al cliente e, quando il pagamento è arrivato, si tocca "Pagato".
 // Satispay: ogni socio ha il suo QR (si sceglie a chi arrivano i soldi).
-// PayPal: un QR solo per il banco. I QR si caricano qui o nella scheda Soci.
+// PayPal: un QR solo per il banco. I QR si caricano qui o in ⚙️ Impostazioni.
 import { ref, computed } from 'vue'
 import { stato, euro } from '../store'
 import { leggiImmagine } from '../immagini'
@@ -60,7 +60,7 @@ let ultimoSocio = ''
         <img v-if="immagine" :src="immagine" :alt="`QR ${nome}`" />
         <p v-else class="aiuto">
           Nessun QR {{ nome }}<span v-if="satispay && socio"> di {{ socio.nome }}</span>.
-          Caricalo qui sotto (foto o screenshot dall'app {{ nome }}) oppure dalla scheda Soci.
+          Caricalo qui sotto (foto o screenshot dall'app {{ nome }}) oppure da ⚙️ Impostazioni.
         </p>
       </div>
       <p class="aiuto">Fai inquadrare il QR al cliente. Tocca <b>Pagato</b> solo quando vedi arrivare il pagamento.</p>
