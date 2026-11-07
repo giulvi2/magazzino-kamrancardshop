@@ -20,12 +20,19 @@ function salvaChiave() {
 
 const incasso = computed(() => stato.vendite.reduce((s, v) => s + v.totale, 0))
 const perTipo = (t) => stato.vendite.filter((v) => v.pagamento === t).reduce((s, v) => s + v.totale, 0)
-// Satispay diviso per socio: i soldi arrivano sul conto di ognuno
-const satispayPerSocio = computed(() => {
+// Satispay e PayPal divisi per socio: i soldi arrivano sul conto di ognuno.
+// Per PayPal, le vendite senza socio sono quelle arrivate sul QR del banco.
+function perSocio(tipo, senzaSocio) {
   const m = new Map()
   for (const v of stato.vendite)
-    if (v.pagamento === 'satispay') m.set(v.incassatoDa || '', (m.get(v.incassatoDa || '') || 0) + v.totale)
-  return [...m].map(([id, totale]) => ({ id, nome: nomeSocio(id) || 'socio non indicato', totale }))
+    if (v.pagamento === tipo) m.set(v.incassatoDa || '', (m.get(v.incassatoDa || '') || 0) + v.totale)
+  return [...m].map(([id, totale]) => ({ id, nome: nomeSocio(id) || senzaSocio, totale }))
+}
+const satispayPerSocio = computed(() => perSocio('satispay', 'socio non indicato'))
+// Il dettaglio PayPal si mostra solo se almeno una vendita è arrivata a un socio
+const paypalPerSocio = computed(() => {
+  const righe = perSocio('paypal', 'banco')
+  return righe.some((x) => x.id) ? righe : []
 })
 const pezzi = computed(() => stato.vendite.reduce((s, v) => s + v.righe.reduce((x, r) => x + r.qta, 0), 0))
 const ora = (iso) => new Date(iso).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
@@ -80,7 +87,8 @@ function azzeraVendite() {
       <div class="card"><small>Pezzi venduti</small><b>{{ pezzi }}</b></div>
       <div class="card"><small>Satispay</small><b>{{ euro(perTipo('satispay')) }}</b>
         <span v-for="x in satispayPerSocio" :key="x.id" class="dettaglio">{{ x.nome }}: {{ euro(x.totale) }}</span></div>
-      <div class="card"><small>PayPal</small><b>{{ euro(perTipo('paypal')) }}</b></div>
+      <div class="card"><small>PayPal</small><b>{{ euro(perTipo('paypal')) }}</b>
+        <span v-for="x in paypalPerSocio" :key="x.id" class="dettaglio">{{ x.nome }}: {{ euro(x.totale) }}</span></div>
     </div>
 
     <!-- Conti della cassa comune: quote in ⚙️ Impostazioni, spese qui sotto -->
