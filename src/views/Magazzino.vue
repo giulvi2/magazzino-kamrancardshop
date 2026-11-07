@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import CampoCodice from '../components/CampoCodice.vue'
 import SchedaArticolo from '../components/SchedaArticolo.vue'
 import StampaEtichette from '../components/StampaEtichette.vue'
-import { stato, euro, trovaPerCodice, pulisciCodice, bip, categorie, nomeSocio } from '../store'
+import { stato, euro, trovaPerCodice, pulisciCodice, bip, categorie, nomeSocio, categoriaConAnno } from '../store'
 
 const filtro = ref('')
 const categoria = ref('') // filtro per categoria ('' = tutte)
@@ -71,7 +71,7 @@ function suCodice(valore) {
     <ul class="lista a-griglia">
       <li v-for="a in elenco" :key="a.id" :class="{ esaurito: a.quantita === 0 }" @click="aperto = a">
         <span class="titolo">{{ a.titolo }}<br />
-          <small><span v-if="di(a)" class="pastiglia socio">{{ nomeSocio(a.proprietario) }}</span><span v-if="a.categoria" class="pastiglia">{{ a.categoria }}</span>{{ a.codice }}</small></span>
+          <small><span v-if="di(a)" class="pastiglia socio">{{ nomeSocio(a.proprietario) }}</span><span v-if="a.categoria" class="pastiglia">{{ categoriaConAnno(a) }}</span>{{ a.codice }}</small></span>
         <span class="pz">{{ euro(a.prezzo) }}<br /><b>{{ a.quantita }}</b> <small>pz</small></span>
       </li>
     </ul>

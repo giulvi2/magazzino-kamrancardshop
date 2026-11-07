@@ -35,6 +35,16 @@ export const CATEGORIE_BASE = ['Fumetti', 'Manga', 'Carte', 'Action figure', 'Ga
 export const categorie = computed(() =>
   [...new Set(stato.articoli.map((a) => a.categoria).filter(Boolean))].sort())
 
+// ---- Anno ----
+// Fumetti e carte possono avere l'anno (di uscita o di stampa). Gli articoli salvati
+// prima di questa versione non hanno il campo: vale come "non indicato" ('').
+// Vale anche per "Fumetto", "Carta", "Carte Pokémon"… (conta l'inizio del nome).
+export const conAnno = (categoria) => /^(fumett|cart)/i.test(String(categoria || '').trim())
+// Solo cifre, al massimo 4 (es. "1998"); '' se vuoto
+export const pulisciAnno = (v) => String(v ?? '').replace(/\D/g, '').slice(0, 4)
+// Testo da mostrare in elenco: "Fumetti · 1998"
+export const categoriaConAnno = (a) => [a.categoria, conAnno(a.categoria) && a.anno].filter(Boolean).join(' · ')
+
 const nuovoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
 
 // I prezzi sono salvati in centesimi (interi) per evitare errori di arrotondamento
@@ -89,6 +99,8 @@ export function salvaArticolo(dati) {
     prezzo: dati.prezzo || 0,
     quantita: Math.max(0, parseInt(dati.quantita) || 0),
     categoria: (dati.categoria || '').trim(),
+    // l'anno si tiene solo per fumetti e carte
+    anno: conAnno(dati.categoria) ? pulisciAnno(dati.anno) : '',
     note: (dati.note || '').trim(),
     proprietario: dati.proprietario || '',
     acquisto: haAcquisto(dati.acquisto) ? dati.acquisto : null,
@@ -298,10 +310,10 @@ const csvCella = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
 const csv = (righe) => '﻿' + righe.map((r) => r.map(csvCella).join(';')).join('\n')
 
 export function esportaMagazzinoCsv() {
-  const righe = [['Codice', 'Titolo', 'Prezzo', 'Quantità', 'Categoria', 'Note', 'Proprietario', 'Prezzo acquisto']]
+  const righe = [['Codice', 'Titolo', 'Prezzo', 'Quantità', 'Categoria', 'Note', 'Proprietario', 'Prezzo acquisto', 'Anno']]
   for (const a of stato.articoli)
     righe.push([a.codice, a.titolo, daCentesimi(a.prezzo), a.quantita, a.categoria, a.note,
-      nomeSocio(a.proprietario), haAcquisto(a.acquisto) ? daCentesimi(a.acquisto) : ''])
+      nomeSocio(a.proprietario), haAcquisto(a.acquisto) ? daCentesimi(a.acquisto) : '', a.anno || ''])
   scarica(`magazzino-${oggi()}.csv`, csv(righe), 'text/csv')
 }
 

@@ -182,6 +182,17 @@ select:focus { border-color: var(--rosso); box-shadow: 0 0 0 4px rgba(226, 35, 2
   padding: 8px 16px; min-height: 40px; font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer;
 }
 .chips button.on { background: var(--rosso); border-color: var(--rosso); color: #fff; }
+.chips.a-capo { flex-wrap: wrap; overflow-x: visible; padding: 0; }
+
+/* Scheda articolo: categoria a bottoni con l'anno di fianco (solo fumetti e carte) */
+.categoria-anno { display: flex; gap: 12px; align-items: flex-start; }
+.campo-categoria { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.etichetta-campo { font-size: 13px; color: var(--testo-tenue); font-weight: 600; }
+.scheda label.campo-anno { flex: 0 0 110px; }
+@media (max-width: 480px) {
+  .categoria-anno { flex-direction: column; align-items: stretch; }
+  .scheda label.campo-anno { flex-basis: auto; }
+}
 
 /* Carrello vuoto con il logo KR */
 .carrello-vuoto { text-align: center; padding: 8px 0 4px; }
