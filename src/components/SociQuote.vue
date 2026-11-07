@@ -14,7 +14,7 @@ function togliSocio(s) {
   if (confirm(`Togliere ${s.nome} dai soci?`)) eliminaSocio(s.id)
 }
 
-// ---- QR per i pagamenti: Satispay di ogni socio, PayPal del banco ----
+// ---- QR per i pagamenti: Satispay di ogni socio, PayPal del banco e (facoltativo) di ogni socio ----
 async function caricaQr(evento, salva) {
   const file = evento.target.files[0]
   evento.target.value = ''
@@ -48,7 +48,8 @@ function togliQr(testo, togli) {
 
     <h2>QR per i pagamenti</h2>
     <p class="aiuto">Carica una foto o uno screenshot del QR (meglio ritagliato sul solo QR).
-      In Vendi, con <b>Satispay</b> si sceglie il socio e compare il suo QR; con <b>PayPal</b> compare quello del banco.
+      In Vendi, con <b>Satispay</b> si sceglie il socio e compare il suo QR; con <b>PayPal</b> compare quello del banco
+      oppure, se un socio ha caricato il suo QR PayPal, si sceglie tra banco e socio.
       I QR finiscono anche nel backup, così arrivano sugli altri telefoni.</p>
     <ul class="lista qr-lista">
       <li v-for="s in stato.soci" :key="'qr' + s.id">
@@ -71,6 +72,17 @@ function togliQr(testo, togli) {
             <input type="file" accept="image/*" hidden @change="caricaQr($event, (d) => (stato.pagamenti.paypalQr = d))" /></label>
           <button v-if="stato.pagamenti.paypalQr" class="mini" title="Togli QR"
                   @click="togliQr('il QR PayPal', () => (stato.pagamenti.paypalQr = ''))">✕</button>
+        </span>
+      </li>
+      <li v-for="s in stato.soci" :key="'pp' + s.id">
+        <img v-if="s.paypalQr" :src="s.paypalQr" alt="" class="qr-mini" />
+        <span v-else class="qr-mini vuoto-qr">—</span>
+        <span class="titolo">PayPal<br /><small>{{ s.nome }}</small></span>
+        <span class="riga stretta">
+          <label class="btn grigio">{{ s.paypalQr ? 'Cambia' : 'Carica' }}
+            <input type="file" accept="image/*" hidden @change="caricaQr($event, (d) => (s.paypalQr = d))" /></label>
+          <button v-if="s.paypalQr" class="mini" title="Togli QR"
+                  @click="togliQr(`il QR PayPal di ${s.nome}`, () => delete s.paypalQr)">✕</button>
         </span>
       </li>
     </ul>
