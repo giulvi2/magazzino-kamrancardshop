@@ -14,6 +14,7 @@ function completa(dati) {
   if (!Array.isArray(dati.soci)) dati.soci = sociIniziali()
   if (!Array.isArray(dati.spese)) dati.spese = []
   // QR dei pagamenti: Satispay è in ogni socio (socio.satispayQr), PayPal è uno per il banco
+  // (pagamenti.paypalQr) più, facoltativo, uno per socio (socio.paypalQr)
   if (!dati.pagamenti || typeof dati.pagamenti !== 'object') dati.pagamenti = { paypalQr: '' }
   dati.categorie = categorieValide(dati.categorie)
   // Promemoria backup: ogni = ogni quante vendite ricordarlo (0 = mai), daUltimo = vendite fatte
@@ -247,7 +248,8 @@ export function ripartisciSconto(righe, sconto) {
 
 // righe: [{ articoloId, titolo, codice, prezzo, qta }]
 // pagamento: 'contanti' | 'carta' | 'satispay' | 'paypal'
-// incassatoDa: per Satispay, l'id del socio sul cui conto sono arrivati i soldi ('' = non indicato)
+// incassatoDa: per Satispay e PayPal, l'id del socio sul cui conto sono arrivati i soldi
+// ('' = non indicato; per PayPal vuol dire il QR del banco)
 // In ogni riga si salvano anche proprietario e prezzo di acquisto dell'articolo in quel
 // momento: così i conti restano giusti anche se poi l'articolo cambia o viene eliminato,
 // e arrivano uguali sugli altri telefoni con "Unisci vendite".
